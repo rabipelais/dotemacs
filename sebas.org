@@ -1,0 +1,94 @@
+#+TITLE: Sebas Emacs configuration
+#+OPTIONS: toc:4 h:4
+#+BABEL: :cache yes
+#+PROPERTY: header-args :tangle sebas.el
+#+PROPERTY: tangle sebas.el
+
+* Configuration
+** About this file
+   :PROPERTIES:
+   :CUSTOM_ID: babel-init
+   :END:
+<<babel-init>>
+
+This is my attempt at making a literate Emacs config file.
+To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v t=).
+
+** Startup
+
+#+BEGIN_SRC emacs-lisp
+;; This sets up the load path so that we can override it
+(package-initialize)
+(setq use-package-always-ensure t)
+(add-to-list 'load-path "/usr/share/emacs/25.2/lisp/cedet")
+#+END_SRC
+
+Install, start up and configure =use-package=, really useful for loading packages lazily
+
+#+BEGIN_SRC emacs-lisp
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+(setq use-package-verbose t)
+(setq use-package-always-ensure t)
+(require 'use-package)
+(use-package auto-compile
+  :config (auto-compile-on-load-mode))
+(setq load-prefer-newer t)
+#+END_SRC
+
+** General Configuration
+
+#+BEGIN_SRC emacs-lisp
+(use-package dash)
+#+END_SRC
+
+*** Backups
+
+By default, Emacs saves backup files in the current directory. These are the files ending in =~= that are cluttering up your directory lists. The following code stashes them all in =~/.emacs.d/backups=, where I can find them with =C-x C-f= (=find-file=) if I really need to.
+
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist '(("." . "~/.emacs.d/backups")))
+#+END_SRC
+
+Disk space is cheap. Save lots.
+
+#+BEGIN_SRC emacs-lisp
+(setq delete-old-versions -1)
+(setq version-control t)
+(setq vc-make-backup-files t)
+(setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
+#+END_SRC
+
+*** Theming
+
+Remove useless clutter
+
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+#+END_SRC
+
+Set theme and welcome message
+
+#+BEGIN_SRC emacs-lisp
+(use-package zenburn :ensure zenburn-theme)
+(load-theme 'zenburn t)
+
+(setq initial-scratch-message ";;; Welcome back, master. Happy hacking.")
+#+END_SRC
+
+Sort out fonts. Use Fira Code with ligatures. The whole chunk at the end is the glyph mapping
+
+#+BEGIN_SRC emacs-lisp
+(set-default-font "-CTDB-Fira Code-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
+(setq default-frame-alist '((font . "Fira Code")))
+(set-face-attribute 'bold nil :family "Fira Code"
+					:height 110
+					:weight 'bold)
+
+;; Code points for ligatures
+(set-fontset-font t '(#Xe100 . #Xe16f) "Fira Code Symbol")
+(set-fontset-font "fontset-default" '(#Xe100 . #Xe16f) "Fira Code Symbol")
+(setq prettify-symbols-unprettify-at-point 'right-edge)
+#+END_SRC

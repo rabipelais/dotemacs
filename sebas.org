@@ -153,6 +153,7 @@ Remove useless clutter
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (setq inhibit-startup-screen t)
+(setq ring-bell-function 'ignore)
 #+END_SRC
 
 Set theme and welcome message
@@ -300,7 +301,9 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
   (progn
     (global-undo-tree-mode)
     (setq undo-tree-visualizer-timestamps t)
-    (setq undo-tree-visualizer-diff t)))
+    (setq undo-tree-visualizer-diff t))
+  :bind (("C-z" . undo-tree-undo)
+		 ("C-S-z" . undo-tree-redo)))
 #+END_SRC
 
 *** Help - guide-key
@@ -333,7 +336,17 @@ region, operate on a single line. Otherwise, operate on region.
         (line-beginning-position 2)))))
 #+END_SRC
 
+
 ** Navigation
+*** Tabs to switch buffers
+
+Use Ctrl+Tab and Shift+Ctrl+Tab to switch buffers like in Firefox. TODO: This conflicts sometimes with Org mode opening headers and similar.
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<C-tab>") 'next-buffer)
+(global-set-key (kbd "<C-S-iso-lefttab>") 'previous-buffer)
+#+END_SRC
+
 *** Pop to mark
 
 Handy way of getting back to previous places.
@@ -380,6 +393,80 @@ From https://github.com/itsjeyd/emacs-config/blob/emacs24/init.el, this makes =M
 (use-package smartscan
   :defer t
   :config (global-smartscan-mode t))
+#+END_SRC
+
+*** IBuffer
+Use IBuffer with =C-x C-b= to better organize current buffers
+#+BEGIN_SRC emacs-lisp
+(use-package ibuffer
+  :ensure t
+  :defer t
+  :config
+  (progn
+	(setq ibuffer-saved-filter-groups
+		  (quote (("default"
+				   ("emacs" (or
+							 (name . "^\\*scratch\\*$")
+							 (name . "^\\*Messages\\*$")))
+				   ("Org" ;; all org-related buffers
+					(mode . org-mode))
+				   ("Mail"
+					(or  ;; mail-related buffers
+					 (mode . message-mode)
+					 (mode . mail-mode)
+					 ;; etc.; all your mail related modes
+					 ))
+				   ("Programming" ;; prog stuff not already in MyProjectX
+					(or
+					 (mode . c-mode)
+					 (mode . perl-mode)
+					 (mode . python-mode)
+					 (mode . emacs-lisp-mode)
+					 (mode . haskell-mode)
+					 ;; etc
+					 ))
+				   ("ERC"   (mode . erc-mode))))))
+	(add-hook 'ibuffer-mode-hook
+			  (lambda ()
+				(ibuffer-switch-to-saved-filter-groups "default"))))
+  :bind ("C-x C-b" . ibuffer))
+#+END_SRC
+
+*** Open line and open line above like in Vim
+=C-o= opens the next line, =M-o= opens the previous line.
+#+BEGIN_SRC emacs-lisp
+;; Behave like vi's o command
+(defun open-next-line (arg)
+  "Move to the next line and then opens a line.
+    See also `newline-and-indent'."
+  (interactive "p")
+  (end-of-line)
+  (open-line arg)
+  (next-line 1)
+  (when newline-and-indent
+    (indent-according-to-mode)))
+(global-set-key (kbd "C-o") 'open-next-line)
+
+;; Behave like vi's O command
+(defun open-previous-line (arg)
+  "Open a new line before the current one.
+     See also `newline-and-indent'."
+  (interactive "p")
+  (beginning-of-line)
+  (open-line arg)
+  (when newline-and-indent
+    (indent-according-to-mode)))
+(global-set-key (kbd "M-o") 'open-previous-line)
+#+END_SRC
+
+*** Highlight symbol like Vim's "*"
+
+#+BEGIN_SRC emacs-lisp
+(use-package highlight-symbol
+  :ensure t
+  :defer t
+  :bind (("C-*" . highlight-symbol-next)
+		 ("C-x *" . highlight-symbol-prev)))
 #+END_SRC
 
 ** Org-mode
@@ -444,6 +531,31 @@ Some general stuff. Setup outline mode so we can use heading levels for code nav
 (add-hook 'prog-mode-hook 'outline-minor-mode)
 #+END_SRC
 
+*** Smartparens
+
+Use smartparens to automatically open and close pairs of parens and quotes. But not "'" (single quote) because this is often used in identifiers in Haskell.
+
+Opening curly braces in C++ also opens newline and indents.
+
+#+BEGIN_SRC emacs-lisp
+(use-package smartparens
+  :ensure t
+  :diminish smartparens-mode
+  :defer t
+  :init (smartparens-global-mode t)
+  :config (sp-pair "'" nil :actions :rem))
+
+(sp-local-pair 'c++-mode "{" nil :post-handlers '((my/create-newline-and-enter-sexp "RET")))
+(defun my/create-newline-and-enter-sexp (&rest _ignored)
+  "Open a new brace or bracket expression, with relevant newlines and indent. "
+  (newline)
+  (indent-according-to-mode)
+  (forward-line -1)
+  (indent-according-to-mode))
+#+END_SRC
+
+*** Company and Flycheck
+
 Setup =company= and =flycheck= for code completion.
 
 #+BEGIN_SRC emacs-lisp
@@ -455,7 +567,9 @@ Setup =company= and =flycheck= for code completion.
   :ensure t
   :diminish flycheck-mode
   :init
-  (add-hook 'after-init-hook #'global-flycheck-mode))
+  (add-hook 'after-init-hook #'global-flycheck-mode)
+  :config
+  (global-flycheck-mode t))
 #+END_SRC
 
 Always indent new lines
@@ -463,6 +577,8 @@ Always indent new lines
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "RET") 'newline-and-indent)
 #+END_SRC
+
+*** Magit
 
 Magit is magical for source control
 
@@ -472,6 +588,145 @@ Magit is magical for source control
   :init
   (autoload 'magit-status "magit" nil t)
   :bind ("C-x g" . magit-status))
+#+END_SRC
+
+*** Projectile
+
+Use =Projectile= for project management. Start with =C-c p=
+
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :ensure t
+  :init
+  (progn
+    (setq projectile-keymap-prefix (kbd "C-c p"))
+    (setq projectile-completion-system 'default)
+    (setq projectile-enable-caching t)
+    (projectile-global-mode))
+  :config
+  (setq projectile-mode-line '(:eval (format "[%s]" (projectile-project-name)))))
+#+END_SRC
+
+*** Perspective
+
+Use =Perspective= for workspaces. A workspace is called a perspective. Commands are prefixed by =C-x x=:
+- =s= -- persp-switch: Query a perspective to switch or create
+- =k= -- persp-remove-buffer: Query a buffer to remove from current perspective
+- =c= -- persp-kill : Query a perspective to kill
+- =r= -- persp-rename: Rename current perspective
+- =a= -- persp-add-buffer: Query an open buffer to add to current perspective
+- =A= -- persp-set-buffer: Add buffer to current perspective and remove it from all others
+- =i= -- persp-import: Import a given perspective from another frame.
+- =n=, <right> -- persp-next : Switch to next perspective
+- =p=, <left> -- persp-prev: Switch to previous perspective
+
+The important ones are probably s, a, n, and p.
+
+#+BEGIN_SRC emacs-lisp
+(use-package perspective
+  :ensure t
+  :init
+  (persp-mode))
+#+END_SRC
+
+*** Ivy
+
+Use =Ivy= instead of =Helm=. Interesting key-bindings:
+- =C-c g= -- find file in current git repository
+- =C-c j= -- grep in current git respository
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy :ensure t
+  :ensure counsel-spotify
+  :ensure avy
+  :ensure counsel
+  :ensure counsel-projectile
+  :diminish (ivy-mode . "")
+  :bind
+  (("C-'" . ivy-avy)
+   ("C-s" . swiper)
+   ("M-x" . counsel-M-x)
+   ("C-x C-f" . counsel-find-file)
+   ("C-c g" . counsel-git)
+   ("C-c j" . counsel-git-grep)
+   ("C-c k" . counsel-ag)
+   ("C-x l" . counsel-locate))
+  :config
+  (ivy-mode 1)
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 15)
+  ;; does not count candidates
+  (setq ivy-count-format "")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil)
+  ;; configure regexp engine.
+  (setq ivy-re-builders-alist
+	;; allow input not in order
+        '((t   . ivy--regex-ignore-order)))
+  (setq magit-completing-read-function 'ivy-completing-read)
+  (counsel-projectile-on))
+#+END_SRC
+
+*** Treemacs
+
+From https://github.com/Alexander-Miller/treemacs. This is a sidebar/navigator that integrates with =Projectile=. For advanced layout, you need both git and python3. Use =C-c tn= or =<f8>= to start/show/go to treemacs.
+When in treemacs, use =n/p= to move, =M-n/M-p= to move to same-height neighbour =u= to go to parent, and =C-n/C-k= to move between projects.
+Experiment using =C-p= for project administration (TODO).
+
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs
+  :ensure t
+  :defer t
+  :config
+  (progn
+    (setq treemacs-follow-after-init          t
+          treemacs-width                      28
+          treemacs-indentation                2
+          treemacs-collapse-dirs              (if (executable-find "python") 3 0)
+          treemacs-silent-refresh             nil
+          treemacs-change-root-without-asking nil
+          treemacs-sorting                    'alphabetic-desc
+          treemacs-show-hidden-files          t
+          treemacs-never-persist              nil
+          treemacs-is-never-other-window      nil
+          treemacs-goto-tag-strategy          'refetch-index)
+
+    (treemacs-follow-mode t)
+    (treemacs-tag-follow-mode t)
+    (setq treemacs-tag-follow-delay 1.0)
+    (treemacs-filewatch-mode t)
+	(treemacs-git-mode t)
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null (executable-find "python3"))))
+      (`(t . t)
+       (treemacs-git-mode 'extended))
+      (`(t . _)
+       (treemacs-git-mode 'simple))))
+  :bind
+  (:map global-map
+        ([f8]         . treemacs-toggle)
+        ("M-0"        . treemacs-select-window)
+        ("C-c 1"      . treemacs-delete-other-windows)
+        ("C-c tn"     . treemacs-toggle)
+        ("C-c tN"     . treemacs)
+        ("C-c tB"     . treemacs-bookmark)
+        ("C-c t C-t"  . treemacs-find-file)
+        ("C-c t M-t"  . treemacs-find-tag)))
+#+END_SRC
+
+Use treemacs constrained to the projectile project.
+
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs-projectile
+  :defer t
+  :ensure t
+  :config
+  (setq treemacs-header-function #'treemacs-projectile-create-header)
+  :bind (:map global-map
+              ("C-c tT" . treemacs-projectile)
+              ("C-c tt" . treemacs-projectile-toggle)))
 #+END_SRC
 
 ** C and Family
@@ -719,4 +974,68 @@ Other facilities like code completion are handled by Merlin.
   :defer t)
 
 (setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
+#+END_SRC
+
+** Latexes
+
+Use AucTex (or however they capitalize it).
+
+#+BEGIN_SRC emacs-lisp
+(use-package auctex
+  :disabled t
+  :ensure t)
+
+(unless (locate-library "auctex")
+  (package-install 'auctex))
+(load "auctex.el" nil t t)
+#+END_SRC
+
+Make Latex mode auto-save, view PDFs, and activate spellcheck. Also activate RefTex for bibliography insertion.
+
+#+BEGIN_SRC emacs-lisp
+(setq TeX-PDF-mode t)
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
+(add-hook 'LaTeX-mode-hook 'visual-line-mode)
+(add-hook 'LaTeX-mode-hook 'flyspell-mode)
+(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+
+(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+(setq reftex-plug-into-AUCTeX t)
+#+END_SRC
+
+Change reftex-var to markdown-pandoc format, so they can be parsed and converted by pandoc.
+#+BEGIN_SRC emacs-lisp
+  ;;TODO: do this more cleanly
+  (use-package markdown-mode
+    :ensure t
+    :init
+    (eval-after-load 'reftex-vars
+      '(progn
+         (setq reftex-cite-format '((?\C-m . "[@%l]")))))
+    (add-hook 'markdown-mode-hook 'reftex-mode)
+    (add-hook 'markdown-mode-hook 'flyspell-mode))
+#+END_SRC
+
+** Haskell
+
+Use intero for the editing. TODO: test again between intero, ghc-mod, and such.
+Also automatically run =haskell-mode-stylish-buffer= on save.
+
+#+BEGIN_SRC emacs-lisp
+(use-package intero
+  :ensure t
+  :config
+  (add-hook 'haskell-mode-hook 'intero-mode)
+  (add-hook 'haskell-mode-hook
+			(lambda ()
+			  (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
+  :init
+ (haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
+ (haskell-process-auto-import-loaded-modules t)
+ (haskell-process-log t)
+ (haskell-process-suggest-hoogle-imports t)
+ (haskell-process-suggest-remove-import-lines t)
+ (haskell-process-type (quote cabal-repl))
+ (haskell-tags-on-save t))
 #+END_SRC

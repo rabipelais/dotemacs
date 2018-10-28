@@ -4,7 +4,7 @@
 #+PROPERTY: header-args :tangle sebas.el
 #+PROPERTY: tangle sebas.el
 
-* Configuration
+* General Configuration
 ** About this file
    :PROPERTIES:
    :CUSTOM_ID: babel-init
@@ -380,4 +380,343 @@ From https://github.com/itsjeyd/emacs-config/blob/emacs24/init.el, this makes =M
 (use-package smartscan
   :defer t
   :config (global-smartscan-mode t))
+#+END_SRC
+
+** Org-mode
+
+*** Modules
+Org has a whole bunch of optional modules. These are the ones I'm
+currently experimenting with.
+
+#+BEGIN_SRC emacs-lisp :drill:
+(setq org-modules '(org-bbdb
+                      org-gnus
+                      org-drill
+                      org-info
+                      org-jsinfo
+                      org-habit
+                      org-irc
+                      org-mouse
+                      org-protocol
+                      org-annotate-file
+                      org-eval
+                      org-expiry
+                      org-interactive-query
+                      org-man
+                      org-collector
+                      org-panel
+                      org-screen
+                      org-toc))
+(eval-after-load 'org
+ '(org-load-modules-maybe t))
+;; Prepare stuff for org-export-backends
+(setq org-export-backends '(org latex icalendar html ascii))
+(setq org-goto-interface 'outline-path-completion
+      org-goto-max-level 10)
+#+END_SRC
+
+*** Keyboard shortcuts
+
+#+BEGIN_SRC emacs-lisp
+(bind-key "C-c r" 'org-capture)
+(bind-key "C-c a" 'org-agenda)
+(bind-key "C-c l" 'org-store-link)
+(bind-key "C-c L" 'org-insert-link-global)
+(bind-key "C-c O" 'org-open-at-point-global)
+(bind-key "<f9> <f9>" 'org-agenda-list)
+(bind-key "<f9> <f8>" (lambda () (interactive) (org-capture nil "r")))
+#+END_SRC
+
+=append-next-kill= is more useful to me than =org-table-copy-region=.
+
+
+* Programming
+
+Some general stuff. Setup outline mode so we can use heading levels for code navigation and organization.
+
+#+BEGIN_SRC emacs-lisp
+(use-package outshine
+  :ensure t
+  :init
+  (add-hook 'outline-minor-mode-hook 'outshine-hook-function))
+
+;; Enables outline-minor-mode for *ALL* programming buffers
+(add-hook 'prog-mode-hook 'outline-minor-mode)
+#+END_SRC
+
+Setup =company= and =flycheck= for code completion.
+
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :ensure t
+  :init (add-hook 'after-init-hook 'global-company-mode))
+
+(use-package flycheck
+  :ensure t
+  :diminish flycheck-mode
+  :init
+  (add-hook 'after-init-hook #'global-flycheck-mode))
+#+END_SRC
+
+Always indent new lines
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "RET") 'newline-and-indent)
+#+END_SRC
+
+Magit is magical for source control
+
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :ensure t
+  :init
+  (autoload 'magit-status "magit" nil t)
+  :bind ("C-x g" . magit-status))
+#+END_SRC
+
+** C and Family
+
+TODO: actually set up the C coding environment. I've never managed to get CEDET and stuff to work.
+
+*** Style
+
+Set indentation style to the One True Style (Kernighan & Ritchie). Also, indentation with tabs. This is the objectively better option and everyone else is wrong (but spaces for alignment).
+
+#+BEGIN_SRC
+(setq c-auto-newline 1) ;; auto newline after curly, semicolon, etc
+(setq-default c-default-style "k&r"
+			  tab-width 4
+			  c-basic-offset 4)
+(setq guess-offset-quiet-p t)
+#+END_SRC
+
+Show the name of the function where you're located.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'c-mode-common-hook
+  (lambda ()
+    (which-function-mode t)))
+#+END_SRC
+
+Use c-likes for editing =glsl= files. Also add the correct file extensions to c++ mode.
+#+BEGIN_SRC emacs-lisp
+  (use-package glsl-mode
+    :ensure t
+    :defer t
+    :init
+    (add-to-list 'auto-mode-alist '("\\.vert\\'" . glsl-mode))
+    (add-to-list 'auto-mode-alist '("\\.frag\\'" . glsl-mode))
+    (add-to-list 'auto-mode-alist '("\\.tesc\\'" . glsl-mode))
+    (add-to-list 'auto-mode-alist '("\\.tese\\'" . glsl-mode)))
+
+  (setq auto-mode-alist (cons '("\.cl$" . c-mode) auto-mode-alist))
+
+  (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+  (add-to-list 'auto-mode-alist '("\\.hpp\\'" . c++-mode))
+  (add-to-list 'auto-mode-alist '("\\.cpp\\'" . c++-mode))
+#+END_SRC
+
+Highlight FIXME, TODO, etc
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'c-mode-common-hook
+               (lambda ()
+                (font-lock-add-keywords nil
+                 '(("\\<\\(FIXME\\|TODO\\|BUG\\)" 1 font-lock-warning-face t)))))
+#+END_SRC
+
+*** Convenience
+
+Switch between header and source files with =C-c o= and compile with =C-c b=.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'c-mode-common-hook
+  (lambda()
+    (local-set-key  (kbd "C-c o") 'ff-find-other-file)
+     (local-set-key  (kbd "C-c b") 'compile)))
+#+END_SRC
+
+** Python
+
+Use elpy with flycheck, ein, and jedi. These executables will probably have to be installed separately by the system package manager. Run =elpy-config= to set paths and other stuff.
+
+#+BEGIN_SRC emacs-lisp
+(use-package elpy
+  :ensure t
+  :ensure flycheck
+  :ensure py-autopep8
+  :ensure ein
+  :ensure jedi
+  :diminish elpy-mode
+  :diminish highlight-indentation-mode
+  :config
+  (elpy-enable)
+  (elpy-use-ipython)
+  (setq elpy-syntax-check-command "pylint")
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode)
+  (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+  (setq elpy-rpc-backend "jedi"))
+#+END_SRC
+
+** Lisp and Family
+
+Enable =paredit= (structural editing, like slurping and stuff).
+
+#+BEGIN_SRC emacs-lisp
+  (use-package paredit
+    :ensure t
+    :init
+    (autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
+    (add-hook 'scheme-mode-hook 'enable-paredit-mode)
+
+    (add-hook 'lisp-mode-hook 'enable-paredit-mode)
+    (add-hook 'lisp-interation-hook 'enable-paredit-mode)
+
+    (add-hook 'inferior-scheme-mode-hook 'enable-paredit-mode))
+#+END_SRC
+
+*** Common Lisp
+
+Use the Steel Bank compiler. Be sure to check if the executable is installed and if it's in the PATH.
+
+#+BEGIN_SRC emacs-lisp
+(setq inferior-lisp-program "sbcl")
+#+END_SRC
+
+Use Slime for the actual editing.
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package slime
+  :ensure t
+  :defer t
+  :config
+  (progn
+    (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
+    (add-hook 'lisp-mode-hook
+	      (lambda ()
+		(set (make-local-variable 'lisp-indent-function)
+		     'common-lisp-indent-function)
+		(sp-pair "`" nil :actions :rem)))
+    (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
+    (slime-setup)
+    (slime-setup '(slime-fancy slime-asdf slime-banner))
+    (setq slime-complete-symbol*-fancy t)
+    (setq slime-complete-symbol-function 'slime-fuzzy-complete-symbol)))
+#+END_SRC
+
+*** Clojure
+
+Use clojure with Cider.
+
+#+BEGIN_SRC emacs-lisp
+(use-package clojure-mode
+  :ensure t
+  :ensure clojure-mode-extra-font-locking
+  :ensure cider
+  :ensure paredit
+  :defer t
+;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
+  :config
+  (progn
+	(add-hook 'clojure-mode-hook 'paredit-mode)
+	(add-hook 'clojure-mode-hook 'subword-mode)
+	;; A little more syntax highlighting
+	(require 'clojure-mode-extra-font-locking)))
+#+END_SRC
+
+Configure Cider
+
+#+BEGIN_SRC emacs-lisp
+  (use-package cider
+    :ensure t
+    :init
+    ;; provides minibuffer documentation for the code you're typing into the repl
+    (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
+    ;; go right to the REPL buffer when it's finished connecting
+    (setq cider-repl-pop-to-buffer-on-connect t)
+
+    ;; When there's a cider error, show its buffer and switch to it
+    (setq cider-show-error-buffer t)
+    (setq cider-auto-select-error-buffer t)
+
+    ;; Where to store the cider history.
+    (setq cider-repl-history-file "~/.emacs.d/cider-history")
+
+    ;; Wrap when navigating history.
+    (setq cider-repl-wrap-history t)
+
+    ;; enable paredit in your REPL
+    (add-hook 'cider-repl-mode-hook 'paredit-mode)
+
+    (defun cider-refresh ()
+      (interactive)
+      (cider-interactive-eval (format "(user/reset)")))
+
+    (defun cider-user-ns ()
+      (interactive)
+      (cider-repl-set-ns "user"))
+
+    (eval-after-load 'cider
+      '(progn
+         (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
+         (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
+         (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns))))
+#+END_SRC
+
+** OCaml
+
+Syntax highlighting, REPL, and debugging are provided by Tuareg. We do have to make sure that =opam= is installed.
+
+#+BEGIN_SRC emacs-lisp
+(use-package tuareg
+  :ensure t
+  :defer t
+  :init
+  (progn
+	(add-hook 'tuareg-mode-hook 'tuareg-imenu-set-imenu)
+	(setq auto-mode-alist
+		  (append '(("\\.ml[ily]?$" . tuareg-mode)
+					("\\.topml$" . tuareg-mode))
+				  auto-mode-alist))
+	(autoload 'utop-setup-ocaml-buffer "utop" "Toplevel for OCaml" t)
+	(add-hook 'tuareg-mode-hook 'utop-setup-ocaml-buffer)))
+#+END_SRC
+
+Other facilities like code completion are handled by Merlin.
+
+#+BEGIN_SRC emacs-lisp
+(use-package merlin
+  :ensure t
+  :defer t
+  :config
+  (progn
+	(setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
+	(add-to-list 'load-path (concat opam-share "/emacs/site-lisp"))
+
+	;; Enable Merlin for ML buffers
+	(add-hook 'tuareg-mode-hook 'merlin-mode)
+	(setq merlin-use-auto-complete-mode t)
+	(setq merlin-error-after-save nil)
+
+	(define-key merlin-mode-map
+	  (kbd "C-c <up>") 'merlin-type-enclosing-go-up)
+	(define-key merlin-mode-map
+	  (kbd "C-c <down>") 'merlin-type-enclosing-go-down)
+	(set-face-background 'merlin-type-face "#88FF44")))
+
+;; -- enable auto-complete -------------------------------
+;; Not required, but useful along with merlin-mode
+(use-package auto-complete
+  :ensure t
+  :defer t
+  :init
+  (add-hook 'tuareg-mode-hook 'auto-complete-mode))
+
+(use-package ocp-indent
+  :ensure t
+  :defer t)
+
+(setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
 #+END_SRC

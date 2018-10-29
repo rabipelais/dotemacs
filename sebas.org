@@ -383,7 +383,7 @@ Windmove doesn't behave well with Org, so we need to use different keybindings. 
   :ensure t
   :init
   (recentf-mode 1)
-  (setq recentf-max-saved-items 200)
+  (setq delete-old-versions t)
   (setq recentf-max-menu-items 30)
   (run-at-time nil (* 5 60) 'recentf-save-list)
   :bind (("C-x C-r" . recentf-open-files)))
@@ -620,17 +620,29 @@ Use =sp-cheat-sheet= for an overview of commands.
 Setup =company= and =flycheck= for code completion.
 
 #+BEGIN_SRC emacs-lisp
-(use-package company
-  :ensure t
-  :init (add-hook 'after-init-hook 'global-company-mode))
+  (use-package company
+    :ensure t
+    :init (add-hook 'after-init-hook 'global-company-mode))
 
-(use-package flycheck
-  :ensure t
-  :diminish flycheck-mode
-  :init
-  (add-hook 'after-init-hook #'global-flycheck-mode)
-  :config
-  (global-flycheck-mode t))
+  (use-package flycheck
+    :ensure t
+    :diminish flycheck-mode
+    :init
+    (add-hook 'after-init-hook #'global-flycheck-mode)
+    :config
+    (progn
+      (global-flycheck-mode t)
+      ;; because git-gutter is in the left fringe
+      (setq flycheck-indication-mode 'right-fringe)
+      ;; A non-descript, left-pointing arrow
+      (fringe-helper-define 'flycheck-fringe-bitmap-double-arrow 'center
+        "...X...."
+        "..XX...."
+        ".XXX...."
+        "XXXX...."
+        ".XXX...."
+        "..XX...."
+        "...X....")))
 #+END_SRC
 
 Always indent new lines
@@ -639,7 +651,7 @@ Always indent new lines
 (global-set-key (kbd "RET") 'newline-and-indent)
 #+END_SRC
 
-*** Magit
+*** Git
 
 Magit is magical for source control
 
@@ -649,6 +661,32 @@ Magit is magical for source control
   :init
   (autoload 'magit-status "magit" nil t)
   :bind ("C-x g" . magit-status))
+#+END_SRC
+
+Show git statuses on the gutter
+
+#+BEGIN_SRC emacs-lisp
+  (use-package git-gutter-fringe+
+    :ensure t
+    :config
+    (progn
+      (global-git-gutter+-mode)
+      ;; places the git gutter outside the margins.
+      (setq-default fringes-outside-margins t)
+      ;; Set not-so-bright colours
+      (set-face-foreground 'git-gutter+-modified "goldenrod1")
+      (set-face-foreground 'git-gutter+-added    "chartreuse3")
+      (set-face-foreground 'git-gutter+-deleted  "firebrick")
+      ;; thin fringe bitmaps
+      (fringe-helper-define 'git-gutter-fr+-added '(center repeated)
+                            "XXX.....")
+      (fringe-helper-define 'git-gutter-fr+-modified '(center repeated)
+                            "XXX.....")
+      (fringe-helper-define 'git-gutter-fr+-deleted 'bottom
+                            "X......."
+                            "XX......"
+                            "XXX....."
+                            "XXXX....")))
 #+END_SRC
 
 *** Projectile
@@ -732,7 +770,7 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 
 *** Treemacs
 
-From https://github.com/Alexander-Miller/treemacs. This is a sidebar/navigator that integrates with =Projectile=. For advanced layout, you need both git and python3. Use =C-c tn= or =<f8>= to start/show/go to treemacs.
+From https://github.com/Alexander-Miller/treemacs. This is a sidebar/navigator that integrates with =Projectile=. For advanced layout, you need both git and python3. Use =C-c tn= or =<f8>= to start/show/go to treemacs. With projectile, use =C-c tt=.
 When in treemacs, use =n/p= to move, =M-n/M-p= to move to same-height neighbour =u= to go to parent, and =C-n/C-k= to move between projects.
 Experiment using =C-p= for project administration (TODO).
 
@@ -792,7 +830,20 @@ Use treemacs constrained to the projectile project.
 
 ** C and Family
 
-TODO: actually set up the C coding environment. I've never managed to get CEDET and stuff to work.
+It offers (based on [[https://github.com/hlissner/doom-emacs/tree/master/modules/lang/cc][=Doom=]] emacs)
+
+- Code completion (=company-irony=)
+- eldoc support (=irony-eldoc=)
+- Syntax-checking (=flycheck-irony=)
+- Code navigation (=rtags=)
+- File Templates (=c-mode, c++-mode=)
+- Snippets (=cc-mode, c-mode, c++-mode=)
+- Several improvements to C++11 indentation and syntax highlighting
+
+It requires having =rtags= and =irony-server= installed.
+
+Many tools will require you to have a =compilation database= (i.e. a =compile_commands.json= file).
+If you use CMake, run it with =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON .=, otherwise, use the cool BEAR tool, for example =bear make=.
 
 *** Style
 
@@ -838,6 +889,96 @@ Highlight FIXME, TODO, etc
                (lambda ()
                 (font-lock-add-keywords nil
                  '(("\\<\\(FIXME\\|TODO\\|BUG\\)" 1 font-lock-warning-face t)))))
+#+END_SRC
+
+Try mucking about with layout and style (TODO).
+
+#+BEGIN_SRC emacs-lisp
+    ;; C/C++ style settings
+    (c-toggle-electric-state -1)
+    (c-toggle-auto-newline -1)
+    (c-set-offset 'substatement-open '0) ; don't indent brackets
+    (c-set-offset 'inline-open       '+)
+    (c-set-offset 'block-open        '+)
+    (c-set-offset 'brace-list-open   '+)
+    (c-set-offset 'case-label        '+)
+    (c-set-offset 'access-label      '-)
+    (c-set-offset 'arglist-intro     '+)
+    (c-set-offset 'arglist-close     '0)
+    ;; Indent privacy keywords at same level as class properties
+    ;; (c-set-offset 'inclass #'+cc-c-lineup-inclass)
+
+  (use-package modern-cpp-font-lock
+    :ensure t
+    :init
+    (add-hook 'c++-mode-hook #'modern-c++-font-lock-mode))
+
+#+END_SRC
+
+*** RTags
+
+Install from the package manager or from here https://github.com/Andersbakken/rtags
+You need a running =rdm= server, which should start automatically, or do it with
+
+#+BEGIN_SRC bash :tangle no
+rdm &
+rc -J $PROJECT_ROOT  # loads PROJECT_ROOT's compile_commands.json
+#+END_SRC
+
+Mostly use =M-.= to jump to symbol.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package rtags
+    :ensure t
+    :init
+    (add-hook c-mode-hook 'rtags-start-process-unless-running)
+    (add-hook c++-mode-hook 'rtags-start-process-unless-running)
+    :config
+    (setq rtags-autostart-diagnostics t
+          rtags-use-bookmarks nil
+          rtags-completions-enabled nil
+          ;; If not using ivy or helm to view results, use a pop-up window rather
+          ;; than displaying it in the current window...
+          rtags-results-buffer-other-window t
+          ;; ...and don't auto-jump to first match before making a selection.
+          rtags-jump-to-first-match nil))
+#+END_SRC
+
+Use =ivy= to browse the tags.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy-rtags
+    :ensure t
+    :config
+    (setq rtags-display-result-backend 'ivy))
+#+END_SRC
+
+*** Irony
+
+=irony-mode= is an Emacs minor-mode that aims at improving the editing experience for the C, C++ and Objective-C languages.
+On the first run, =irony-mode= will ask you to build and install =irony-server=. To do so, type =M-x irony-install-server= RET.
+
+#+BEGIN_SRC emacs-lisp
+    (use-package irony
+      :ensure t
+      :ensure flycheck-irony
+      :ensure company-irony
+      :ensure irony-eldoc
+      :commands irony-install-server
+      :init
+      (add-hook 'c++-mode-hook 'irony-mode)
+      (add-hook 'c-mode-hook 'irony-mode)
+      (add-hook 'objc-mode-hook 'irony-mode)
+
+      (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+
+      ;; Company completion
+      (eval-after-load 'company
+        '(add-to-list 'company-backends 'company-irony))
+
+      ;; Checker with flycheck
+      (eval-after-load 'flycheck
+        '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup)))
 #+END_SRC
 
 *** Convenience

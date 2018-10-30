@@ -1220,25 +1220,76 @@ Change reftex-var to markdown-pandoc format, so they can be parsed and converted
 
 ** Haskell
 
-Use intero for the editing. TODO: test again between intero, ghc-mod, and such.
-Also automatically run =haskell-mode-stylish-buffer= on save.
+Use intero for the editing. TODO: test again between intero, dante, ghc-mod, and such.
+Also automatically run =haskell-mode-stylish-buffer= on save. Intero *requires* =stack= and =ghc-mod=.
+
+- Code completion (company-ghc)
+- Look up documentation (hoogle)
+- eldoc support (intero)
+- REPL (ghci)
+- Syntax-checking (flycheck)
+- Code navigation (intero)
+
+Useful keybindings:
+
+
+|             |                                |                          |
+|-------------+--------------------------------+--------------------------|
+| =C-c ! l=   | flycheck-list-errors           | See a list of all errors |
+| =C-c ! n/p= | flycheck-(next/previous)-error | Jump to next/prev error  |
+| =M-.=       | intero-goto-definition         | Go to symbol definition  |
+| =C-c C-t=   | intero-type-at                 | Show type at cursor      |
+| =C-c C-r=   | intero-apply-suggestion        | Apply =GHC= suggestion   |
+|             |                                |                          |
+
 
 #+BEGIN_SRC emacs-lisp
-(use-package intero
-  :ensure t
-  :config
-  (add-hook 'haskell-mode-hook 'intero-mode)
-  (add-hook 'haskell-mode-hook
-			(lambda ()
-			  (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
-  :init
- (haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
- (haskell-process-auto-import-loaded-modules t)
- (haskell-process-log t)
- (haskell-process-suggest-hoogle-imports t)
- (haskell-process-suggest-remove-import-lines t)
- (haskell-process-type (quote cabal-repl))
- (haskell-tags-on-save t))
+  (def-package! haskell-mode
+    :mode "\\.hs$"
+    :mode ("\\.ghci$" . ghci-script-mode)
+    :mode ("\\.cabal$" . haskell-cabal-mode)
+    :interpreter (("runghc" . haskell-mode)
+                  ("runhaskell" . haskell-mode))
+    :config
+    (load "haskell-mode-autoloads" nil t)
+    (autoload 'switch-to-haskell "inf-haskell" nil t))
+#+END_SRC
+
+Setup intero:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package intero
+    :ensure t
+    :hook (haskell-mode . intero-mode)
+    :config
+    (add-hook 'haskell-mode-hook
+              (lambda ()
+                (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
+    (add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
+    :init
+    (haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
+    (haskell-process-auto-import-loaded-modules t)
+    (haskell-process-log t)
+    (haskell-process-suggest-hoogle-imports t)
+    (haskell-process-suggest-remove-import-lines t)
+    (haskell-process-type (quote cabal-repl))
+    (haskell-tags-on-save t))
+
+  (use-package hindent
+    :ensure t
+    :hook (haskell-mode . hindent-mode))
+#+END_SRC
+
+Company for completion:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-ghc
+    :ensure t
+    :after haskell-mode
+    :init
+    (add-hook 'haskell-mode-hook #'ghc-comp-init))
+
+    (setq company-ghc-show-info 'oneline))
 #+END_SRC
 ** Rust
 

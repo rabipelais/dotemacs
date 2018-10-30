@@ -94,6 +94,14 @@ tangled, and the tangled file is compiled."
 (add-hook 'after-save-hook 'tangle-init)
 #+END_SRC
 
+Useful template to insert elisp code blocks:
+
+#+BEGIN_SRC emacs-lisp
+;; add <el for emacs-lisp expansion
+(add-to-list 'org-structure-template-alist
+             '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>"))
+#+END_SRC
+
 
 ** Startup
 
@@ -143,6 +151,14 @@ Disk space is cheap. Save lots.
 (desktop-save-mode 1)
 (savehist-mode 1)
 (add-to-list 'savehist-additional-variables 'kill-ring)
+
+(setq save-place-file "~/.emacs.d/saveplace") ;; keep my ~/ clean
+(setq-default save-place t)
+
+;; Configuration for bookmarks
+(setq
+  bookmark-default-file "~/.emacs.d/bookmarks" ;; keep my ~/ clean
+  bookmark-save-flag 1);; autosave each change)
 #+END_SRC
 
 *** Theming
@@ -155,6 +171,7 @@ Remove useless clutter
 (scroll-bar-mode -1)
 (setq inhibit-startup-screen t)
 (setq ring-bell-function 'ignore)
+(fset 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
 Set theme and welcome message
@@ -392,6 +409,23 @@ region, operate on a single line. Otherwise, operate on region.
         (line-beginning-position 2)))))
 #+END_SRC
 
+*** Ido mode
+Never turn this off
+#+BEGIN_SRC emacs-lisp
+(ido-mode 1)
+(setq ido-enable-flex-matching t)
+(setq ido-everywhere t)
+#+END_SRC
+
+*** Smoother scrolling
+
+#+BEGIN_SRC emacs-lisp
+;; scroll one line at a time (less "jumpy" than defaults)
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1))) ;; one line at a time
+(setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+(setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+(setq scroll-step 1) ;; keyboard scroll one line at a time
+#+END_SRC
 
 ** Navigation
 *** Tabs to switch buffers

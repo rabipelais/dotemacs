@@ -94,23 +94,26 @@ tangled, and the tangled file is compiled."
 (add-hook 'after-save-hook 'tangle-init)
 #+END_SRC
 
-Useful template to insert elisp code blocks:
-
-#+BEGIN_SRC emacs-lisp
-;; add <el for emacs-lisp expansion
-(add-to-list 'org-structure-template-alist
-             '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>"))
-#+END_SRC
-
-
 ** Startup
 
 #+BEGIN_SRC emacs-lisp
-;; This sets up the load path so that we can override it
-(package-initialize)
-(package-refresh-contents)
-(setq use-package-always-ensure t)
-(add-to-list 'load-path "/usr/share/emacs/25.2/lisp/cedet")
+  (require 'package)
+
+  ;; Add melpa
+  (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                      (not (gnutls-available-p))))
+         (proto (if no-ssl "http" "https")))
+    ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+    ;;(add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+    (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+    (when (< emacs-major-version 24)
+      ;; For important compatibility libraries like cl-lib
+      (add-to-list 'package-archives '("gnu" . (concat proto "://elpa.gnu.org/packages/")))))
+
+  (package-initialize)
+
+  (setq use-package-always-ensure t)
+  (setq use-package-always-defer t)
 #+END_SRC
 
 Install, start up and configure =use-package=, really useful for loading packages lazily
@@ -149,6 +152,7 @@ Disk space is cheap. Save lots.
 (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
 
 (desktop-save-mode 1)
+(setq desktop-load-locked-desktop t)
 (savehist-mode 1)
 (add-to-list 'savehist-additional-variables 'kill-ring)
 
@@ -593,6 +597,16 @@ currently experimenting with.
       org-goto-max-level 10)
 #+END_SRC
 
+
+Useful template to insert elisp code blocks:
+
+#+BEGIN_SRC emacs-lisp
+;; add <el for emacs-lisp expansion
+(eval-after-load 'org
+  '(add-to-list 'org-structure-template-alist
+             '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>")))
+#+END_SRC
+
 *** Keyboard shortcuts
 
 #+BEGIN_SRC emacs-lisp
@@ -712,6 +726,7 @@ Setup =company= and =flycheck= for code completion.
 
   (use-package flycheck
     :ensure t
+    :after fringe-helper
     :diminish flycheck-mode
     :init
     (add-hook 'after-init-hook #'global-flycheck-mode)
@@ -754,6 +769,7 @@ Show git statuses on the gutter
 #+BEGIN_SRC emacs-lisp
   (use-package git-gutter-fringe+
     :ensure t
+    :ensure fringe-helper
     :config
     (progn
       (global-git-gutter+-mode)
@@ -821,11 +837,21 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 - =C-c j= -- grep in current git respository
 
 #+BEGIN_SRC emacs-lisp
-(use-package ivy :ensure t
-  :ensure counsel-spotify
-  :ensure avy
-  :ensure counsel
-  :ensure counsel-projectile
+(use-package counsel-projectile
+  :ensure t)
+
+(use-package counsel-spotify
+  :ensure t)
+
+(use-package avy
+  :ensure t)
+
+(use-package ivy 
+  :ensure t
+  :after counsel-spotify
+  :after avy
+  :after counsel
+  :after counsel-projectile
   :diminish (ivy-mode . "")
   :bind
   (("C-'" . ivy-avy)
@@ -851,7 +877,7 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 	;; allow input not in order
         '((t   . ivy--regex-ignore-order)))
   (setq magit-completing-read-function 'ivy-completing-read)
-  (counsel-projectile-on))
+  (counsel-projectile-mode))
 #+END_SRC
 
 *** Treemacs
@@ -981,6 +1007,8 @@ Try mucking about with layout and style (TODO).
 
 #+BEGIN_SRC emacs-lisp
     ;; C/C++ style settings
+  (use-package cc-mode
+    :config
     (c-toggle-electric-state -1)
     (c-toggle-auto-newline -1)
     (c-set-offset 'substatement-open '0) ; don't indent brackets
@@ -993,6 +1021,7 @@ Try mucking about with layout and style (TODO).
     (c-set-offset 'arglist-close     '0)
     ;; Indent privacy keywords at same level as class properties
     ;; (c-set-offset 'inclass #'+cc-c-lineup-inclass)
+    )
 
   (use-package modern-cpp-font-lock
     :ensure t
@@ -1017,8 +1046,8 @@ Mostly use =M-.= to jump to symbol.
   (use-package rtags
     :ensure t
     :init
-    (add-hook c-mode-hook 'rtags-start-process-unless-running)
-    (add-hook c++-mode-hook 'rtags-start-process-unless-running)
+    (add-hook 'c-mode-hook 'rtags-start-process-unless-running)
+    (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
     :config
     (setq rtags-autostart-diagnostics t
           rtags-use-bookmarks nil
@@ -1093,7 +1122,8 @@ Use elpy with flycheck, ein, and jedi. These executables will probably have to b
   :diminish highlight-indentation-mode
   :config
   (elpy-enable)
-  (elpy-use-ipython)
+  (setq python-shell-interpreter "ipython"
+      python-shell-interpreter-args "-i --simple-prompt")
   (setq elpy-syntax-check-command "pylint")
   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
   (add-hook 'elpy-mode-hook 'flycheck-mode)
@@ -1330,7 +1360,7 @@ Useful keybindings:
 
 
 #+BEGIN_SRC emacs-lisp
-  (def-package! haskell-mode
+  (use-package haskell-mode
     :mode "\\.hs$"
     :mode ("\\.ghci$" . ghci-script-mode)
     :mode ("\\.cabal$" . haskell-cabal-mode)
@@ -1352,7 +1382,7 @@ Setup intero:
               (lambda ()
                 (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
     (add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
-    :init
+    :config
     (haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
     (haskell-process-auto-import-loaded-modules t)
     (haskell-process-log t)
@@ -1373,7 +1403,7 @@ Company for completion:
     :ensure t
     :after haskell-mode
     :init
-    (add-hook 'haskell-mode-hook #'ghc-comp-init))
+    (add-hook 'haskell-mode-hook #'ghc-comp-init)
 
     (setq company-ghc-show-info 'oneline))
 #+END_SRC

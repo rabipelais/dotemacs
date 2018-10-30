@@ -1,8 +1,8 @@
 #+TITLE: Sebas Emacs configuration
 #+OPTIONS: toc:4 h:4
 #+BABEL: :cache yes
-#+PROPERTY: header-args :tangle sebas.el
-#+PROPERTY: tangle sebas.el
+#+PROPERTY: header-args :tangle init.el
+#+PROPERTY: tangle init.el
 
 * General Configuration
 ** About this file
@@ -85,11 +85,11 @@ the =after-save-hook= ensuring to always tangle and byte-compile the
   "If the current buffer is 'init.org' the code-blocks are
 tangled, and the tangled file is compiled."
   (when (equal (buffer-file-name)
-               (expand-file-name (concat user-emacs-directory "sebas.org")))
+               (expand-file-name (concat user-emacs-directory "init.org")))
     ;; Avoid running hooks when tangling.
     (let ((prog-mode-hook nil))
       (org-babel-tangle)
-      (byte-compile-file (concat user-emacs-directory "sebas.el")))))
+      (byte-compile-file (concat user-emacs-directory "init.el")))))
 
 (add-hook 'after-save-hook 'tangle-init)
 #+END_SRC

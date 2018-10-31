@@ -111,16 +111,17 @@ tangled, and the tangled file is compiled."
       (add-to-list 'package-archives '("gnu" . (concat proto "://elpa.gnu.org/packages/")))))
 
   (package-initialize)
-
-  (setq use-package-always-ensure t)
-  (setq use-package-always-defer t)
 #+END_SRC
 
 Install, start up and configure =use-package=, really useful for loading packages lazily
 
 #+BEGIN_SRC emacs-lisp
 (unless (package-installed-p 'use-package)
+  (package-refresh-contents)
   (package-install 'use-package))
+
+(setq use-package-always-ensure t)
+(setq use-package-always-defer t)
 (setq use-package-verbose t)
 (setq use-package-always-ensure t)
 (require 'use-package)
@@ -254,6 +255,7 @@ sequentially."
 				       prettify-symbols-alist)))
 (ligatures-fira-code-setup)
 (global-prettify-symbols-mode 1)
+(global-prettify-symbols-mode)
 #+END_SRC
 
 *** Modeline configuration
@@ -653,7 +655,6 @@ Use =sp-cheat-sheet= for an overview of commands.
     :config
     (progn
       (require 'smartparens-config)
-      (sp-pair "'" nil :actions :rem)
       ;;;;;;;;;;;;;;;;;;;
       ;; keybinding management
 
@@ -837,6 +838,9 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 - =C-c j= -- grep in current git respository
 
 #+BEGIN_SRC emacs-lisp
+(use-package counsel
+  :ensure t)
+
 (use-package counsel-projectile
   :ensure t)
 
@@ -848,10 +852,6 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 
 (use-package ivy 
   :ensure t
-  :after counsel-spotify
-  :after avy
-  :after counsel
-  :after counsel-projectile
   :diminish (ivy-mode . "")
   :bind
   (("C-'" . ivy-avy)

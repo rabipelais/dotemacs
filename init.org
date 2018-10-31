@@ -768,18 +768,21 @@ Magit is magical for source control
 Show git statuses on the gutter
 
 #+BEGIN_SRC emacs-lisp
-  (use-package git-gutter-fringe+
+(use-package fringe-helper
+    :ensure t)
+
+(use-package git-gutter-fringe+
     :ensure t
-    :ensure fringe-helper
     :config
     (progn
       (global-git-gutter+-mode)
+      (git-gutter+-enable-fringe-display-mode)
       ;; places the git gutter outside the margins.
       (setq-default fringes-outside-margins t)
       ;; Set not-so-bright colours
-      (set-face-foreground 'git-gutter+-modified "goldenrod1")
-      (set-face-foreground 'git-gutter+-added    "chartreuse3")
-      (set-face-foreground 'git-gutter+-deleted  "firebrick")
+      (set-face-foreground 'git-gutter-fr+-modified "goldenrod1")
+      (set-face-foreground 'git-gutter-fr+-added    "chartreuse3")
+      (set-face-foreground 'git-gutter-fr+-deleted  "firebrick")
       ;; thin fringe bitmaps
       (fringe-helper-define 'git-gutter-fr+-added '(center repeated)
                             "XXX.....")

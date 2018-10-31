@@ -433,6 +433,13 @@ Never turn this off
 (setq scroll-step 1) ;; keyboard scroll one line at a time
 #+END_SRC
 
+*** Highlight matching parents
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode 1)
+(setq show-paren-delay 0)
+#+END_SRC
+
 ** Navigation
 *** Tabs to switch buffers
 

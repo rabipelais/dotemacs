@@ -434,6 +434,10 @@ Never turn this off
 #+END_SRC
 
 *** Highlight matching parents
+*** Truncate lines by default
+#+BEGIN_SRC emacs-lisp
+(set-default 'truncate-lines t)
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (show-paren-mode 1)
@@ -930,8 +934,7 @@ Experiment using =C-p= for project administration (TODO).
         ([f8]         . treemacs-toggle)
         ("M-0"        . treemacs-select-window)
         ("C-c 1"      . treemacs-delete-other-windows)
-        ("C-c tn"     . treemacs-toggle)
-        ("C-c tN"     . treemacs)
+        ("C-c tn"     . treemacs)
         ("C-c tB"     . treemacs-bookmark)
         ("C-c t C-t"  . treemacs-find-file)
         ("C-c t M-t"  . treemacs-find-tag)))
@@ -946,8 +949,7 @@ Use treemacs constrained to the projectile project.
   :config
   (setq treemacs-header-function #'treemacs-projectile-create-header)
   :bind (:map global-map
-              ("C-c tT" . treemacs-projectile)
-              ("C-c tt" . treemacs-projectile-toggle)))
+              ("C-c tt" . treemacs-projectile)))
 #+END_SRC
 
 ** C and Family

@@ -130,6 +130,22 @@ Install, start up and configure =use-package=, really useful for loading package
 (setq load-prefer-newer t)
 #+END_SRC
 
+Install =delight= and =diminish=
+
+#+BEGIN_SRC emacs-lisp
+(use-package delight)
+(use-package diminish)
+(diminish 'auto-revert-mode)
+#+END_SRC
+
+Install =req-package=
+
+#+BEGIN_SRC emacs-lisp
+(use-package req-package
+  :ensure t)
+(require 'req-package)
+#+END_SRC
+
 ** General Configuration
 
 #+BEGIN_SRC emacs-lisp
@@ -374,7 +390,7 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 
 #+BEGIN_SRC emacs-lisp :drill:
 (use-package undo-tree
-  :diminish undo-tree-mode
+  :diminish
   :config
   (progn
     (global-undo-tree-mode)
@@ -391,7 +407,6 @@ It's hard to remember keyboard shortcuts. The =guide-key= package pops up help a
 #+BEGIN_SRC emacs-lisp
 (use-package guide-key
   :ensure t
-  :defer t
   :diminish guide-key-mode
   :config
   (progn
@@ -482,7 +497,6 @@ Windmove doesn't behave well with Org, so we need to use different keybindings. 
 
 #+BEGIN_SRC emacs-lisp
 (use-package recentf
-  :defer t
   :ensure t
   :init
   (recentf-mode 1)
@@ -499,7 +513,6 @@ From https://github.com/itsjeyd/emacs-config/blob/emacs24/init.el, this makes =M
 #+BEGIN_SRC emacs-lisp
 (use-package smartscan
   :ensure t
-  :defer t
   :config (global-smartscan-mode t))
 #+END_SRC
 
@@ -508,7 +521,6 @@ Use IBuffer with =C-x C-b= to better organize current buffers
 #+BEGIN_SRC emacs-lisp
 (use-package ibuffer
   :ensure t
-  :defer t
   :config
   (progn
 	(setq ibuffer-saved-filter-groups
@@ -572,7 +584,7 @@ Use IBuffer with =C-x C-b= to better organize current buffers
 #+BEGIN_SRC emacs-lisp
 (use-package highlight-symbol
   :ensure t
-  :defer t
+  :diminish
   :bind (("C-*" . highlight-symbol-next)
 		 ("C-x *" . highlight-symbol-prev)))
 #+END_SRC
@@ -641,7 +653,7 @@ Some general stuff. Setup outline mode so we can use heading levels for code nav
 
 #+BEGIN_SRC emacs-lisp
 (use-package outshine
-  :ensure t
+  :diminish
   :init
   (add-hook 'outline-minor-mode-hook 'outshine-hook-function))
 
@@ -661,7 +673,6 @@ Use =sp-cheat-sheet= for an overview of commands.
   (use-package smartparens
     :ensure t
     :diminish smartparens-mode
-    :defer t
     :init (smartparens-global-mode t)
     :config
     (progn
@@ -734,12 +745,13 @@ Setup =company= and =flycheck= for code completion.
 #+BEGIN_SRC emacs-lisp
   (use-package company
     :ensure t
+    :diminish
     :init (add-hook 'after-init-hook 'global-company-mode))
 
   (use-package flycheck
     :ensure t
     :after fringe-helper
-    :diminish flycheck-mode
+    :diminish
     :init
     (add-hook 'after-init-hook #'global-flycheck-mode)
     :config
@@ -784,6 +796,7 @@ Show git statuses on the gutter
 
 (use-package git-gutter-fringe+
     :ensure t
+    :delight git-gutter+-mode
     :config
     (progn
       (global-git-gutter+-mode)
@@ -813,6 +826,7 @@ Use =Projectile= for project management. Start with =C-c p=
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
   :ensure t
+  :delight '(:eval (concat " " (projectile-project-name)))
   :init
   (progn
     (setq projectile-keymap-prefix (kbd "C-c p"))
@@ -841,6 +855,7 @@ The important ones are probably s, a, n, and p.
 #+BEGIN_SRC emacs-lisp
 (use-package perspective
   :ensure t
+  :diminish
   :init
   (persp-mode))
 #+END_SRC
@@ -852,6 +867,7 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 - =C-c j= -- grep in current git respository
 
 #+BEGIN_SRC emacs-lisp
+
 (use-package counsel
   :ensure t)
 
@@ -860,13 +876,13 @@ Use =Ivy= instead of =Helm=. Interesting key-bindings:
 
 (use-package counsel-spotify
   :ensure t)
-
+ 
 (use-package avy
   :ensure t)
 
 (use-package ivy 
   :ensure t
-  :diminish (ivy-mode . "")
+  :delight
   :bind
   (("C-'" . ivy-avy)
    ("C-s" . swiper)
@@ -903,7 +919,6 @@ Experiment using =C-p= for project administration (TODO).
 #+BEGIN_SRC emacs-lisp
 (use-package treemacs
   :ensure t
-  :defer t
   :config
   (progn
     (setq treemacs-follow-after-init          t
@@ -943,8 +958,8 @@ Experiment using =C-p= for project administration (TODO).
 Use treemacs constrained to the projectile project.
 
 #+BEGIN_SRC emacs-lisp
-(use-package treemacs-projectile
-  :defer t
+(req-package treemacs-projectile
+  :require treemacs projectile
   :ensure t
   :config
   (setq treemacs-header-function #'treemacs-projectile-create-header)
@@ -1074,8 +1089,9 @@ Mostly use =M-.= to jump to symbol.
 Use =ivy= to browse the tags.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ivy-rtags
+  (req-package ivy-rtags
     :ensure t
+    :require ivy rtags
     :config
     (setq rtags-display-result-backend 'ivy))
 #+END_SRC
@@ -1086,11 +1102,10 @@ Use =ivy= to browse the tags.
 On the first run, =irony-mode= will ask you to build and install =irony-server=. To do so, type =M-x irony-install-server= RET.
 
 #+BEGIN_SRC emacs-lisp
-    (use-package irony
+    (req-package irony
       :ensure t
-      :ensure flycheck-irony
-      :ensure company-irony
-      :ensure irony-eldoc
+      :require flycheck-irony company-irony irony-eldoc
+      :diminish
       :commands irony-install-server
       :init
       (add-hook 'c++-mode-hook 'irony-mode)
@@ -1124,12 +1139,9 @@ Switch between header and source files with =C-c o= and compile with =C-c b=.
 Use elpy with flycheck, ein, and jedi. These executables will probably have to be installed separately by the system package manager. Run =elpy-config= to set paths and other stuff.
 
 #+BEGIN_SRC emacs-lisp
-(use-package elpy
+(req-package elpy
   :ensure t
-  :ensure flycheck
-  :ensure py-autopep8
-  :ensure ein
-  :ensure jedi
+  :require flycheck py-autopep8 ein jedi
   :diminish elpy-mode
   :diminish highlight-indentation-mode
   :config
@@ -1150,6 +1162,7 @@ Enable =paredit= (structural editing, like slurping and stuff).
 #+BEGIN_SRC emacs-lisp
   (use-package paredit
     :ensure t
+    :diminish
     :init
     (autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
     (add-hook 'scheme-mode-hook 'enable-paredit-mode)
@@ -1174,7 +1187,6 @@ Use Slime for the actual editing.
 
 (use-package slime
   :ensure t
-  :defer t
   :config
   (progn
     (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
@@ -1195,12 +1207,9 @@ Use Slime for the actual editing.
 Use clojure with Cider.
 
 #+BEGIN_SRC emacs-lisp
-(use-package clojure-mode
+(req-package clojure-mode
   :ensure t
-  :ensure clojure-mode-extra-font-locking
-  :ensure cider
-  :ensure paredit
-  :defer t
+  :require clojure-mode-extra-font-locking cider paredit
 ;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
   :config
   (progn
@@ -1256,7 +1265,7 @@ Syntax highlighting, REPL, and debugging are provided by Tuareg. We do have to m
 #+BEGIN_SRC emacs-lisp
 (use-package tuareg
   :ensure t
-  :defer t
+  :diminish
   :init
   (progn
 	(add-hook 'tuareg-mode-hook 'tuareg-imenu-set-imenu)
@@ -1273,7 +1282,7 @@ Other facilities like code completion are handled by Merlin.
 #+BEGIN_SRC emacs-lisp
 (use-package merlin
   :ensure t
-  :defer t
+  :diminish
   :config
   (progn
 	(setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
@@ -1294,12 +1303,10 @@ Other facilities like code completion are handled by Merlin.
 ;; Not required, but useful along with merlin-mode
 (use-package auto-complete
   :ensure t
-  :defer t
   :init
   (add-hook 'tuareg-mode-hook 'auto-complete-mode))
 
 (use-package ocp-indent
-  :ensure t
   :defer t)
 
 (setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
@@ -1389,6 +1396,7 @@ Setup intero:
   (use-package intero
     :ensure t
     :hook (haskell-mode . intero-mode)
+    :diminish
     :config
     (add-hook 'haskell-mode-hook
               (lambda ()
@@ -1411,9 +1419,11 @@ Setup intero:
 Company for completion:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package company-ghc
+  (req-package company-ghc
     :ensure t
+    :require haskell-mode company
     :after haskell-mode
+    :diminish
     :init
     (add-hook 'haskell-mode-hook #'ghc-comp-init)
 
@@ -1439,8 +1449,10 @@ Rust support to Emacs.
 Setup racer, flycheck and company:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package racer
+  (req-package racer
     :ensure t
+    :require rust-mode
+    :diminish
     :after rust-mode
     :hook (rust-mode . racer-mode)
     :config
@@ -1455,19 +1467,38 @@ Setup racer, flycheck and company:
       (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))
 
 
-  (use-package company-racer
+  (req-package company-racer
     :ensure t
-    :ensure company
+    :require company
     :after racer
     :config
     (with-eval-after-load 'company
       (add-to-list 'company-backends 'company-racer)))
 
 
-  (use-package flycheck-rust
+  (req-package flycheck-rust
     :ensure t
-    :ensure flycheck
+    :require flycheck
     :after rust-mode
     :hook (flycheck-mode . flycheck-rust-setup)
     :config (add-hook 'rust-mode-hook #'flycheck-mode))
+#+END_SRC
+
+
+* Bookend
+
+** Resolve dependency graph, download, and install.
+#+BEGIN_SRC emacs-lisp
+(require 'git-gutter-fringe+)
+(require 'racer)
+(require 'ivy)
+(require 'company-racer)
+(require 'flycheck-rust)
+(require 'treemacs-projectile)
+(require 'ivy-rtags)
+(require 'irony)
+(require 'elpy)
+(require 'clojure-mode)
+(require 'company-ghc)
+(req-package-finish)
 #+END_SRC

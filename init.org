@@ -302,8 +302,9 @@ sequentially."
 *** Modeline configuration
 
 #+BEGIN_SRC emacs-lisp
-  (req-package spaceline
-    :require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
+  (use-package spaceline
+    ;;:require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
+    :demand
     :config
     (setq nyan-wavy-trail t)
     (nyan-mode t)

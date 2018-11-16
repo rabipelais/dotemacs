@@ -153,6 +153,24 @@ Install the startup profiler
     :ensure t)
 #+END_SRC
 
+Setup a splash screen
+
+#+BEGIN_SRC emacs-lisp
+(use-package dashboard
+  :ensure t
+  :diminish dashboard-mode
+  :config
+  (setq dashboard-banner-logo-title "Help, I'm stuck in this computer.")
+  (setq dashboard-startup-banner 'logo)
+  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+  (setq dashboard-items '((recents  . 5)
+                        (bookmarks . 5)
+                        (projects . 5)
+                        (agenda . 5)
+                        (registers . 5)))
+  (dashboard-setup-startup-hook))
+#+END_SRC
+
 ** General Configuration
 
 #+BEGIN_SRC emacs-lisp
@@ -284,17 +302,8 @@ sequentially."
 *** Modeline configuration
 
 #+BEGIN_SRC emacs-lisp
-  (use-package spaceline
-    :ensure t
-    :ensure ein
-    :ensure all-the-icons
-    :ensure spaceline-all-the-icons
-    ;; Super necessary nyan cat progress bar
-    :ensure nyan-mode
-    ;; Display search information in the modeline
-    :ensure anzu
-    :ensure evil
-    :ensure flycheck
+  (req-package spaceline
+    :require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
     :init
     (setq nyan-wavy-trail t)
     (nyan-mode t)
@@ -303,8 +312,10 @@ sequentially."
     ;; Uncomment for evil mode (TODO: actually learn how to use evil mode)
     ;; (evil-mode 1)
     ;; (setq evil-default-state 'emacs)
+
     (require 'spaceline-config)
     (require 'spaceline-segments)
+
     (defun my/spaceline--theme (left second-left &rest additional-segments)
       "Convenience function for the spacemacs and emacs themes."
       (spaceline-compile
@@ -317,7 +328,7 @@ sequentially."
           ((flycheck-error flycheck-warning flycheck-info)
            :when active
            :priority -9)
-          (minor-modes :when active)
+          ;;(minor-modes :when active)
           (mu4e-alert-segment :when active)
           (erc-track :when active)
           (version-control :when active
@@ -1532,5 +1543,6 @@ Setup racer, flycheck and company:
 (require 'elpy)
 (require 'clojure-mode)
 (require 'company-ghc)
+(require 'spaceline)
 (req-package-finish)
 #+END_SRC

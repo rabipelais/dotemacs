@@ -159,7 +159,7 @@ Setup a splash screen
 (use-package dashboard
   :ensure t
   :diminish dashboard-mode
-  :config
+  :init
   (setq dashboard-banner-logo-title "Help, I'm stuck in this computer.")
   (setq dashboard-startup-banner 'logo)
   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
@@ -304,7 +304,7 @@ sequentially."
 #+BEGIN_SRC emacs-lisp
   (req-package spaceline
     :require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
-    :init
+    :config
     (setq nyan-wavy-trail t)
     (nyan-mode t)
     (setq powerline-default-separator 'butt)
@@ -982,10 +982,9 @@ Experiment using =C-p= for project administration (TODO).
             treemacs-goto-tag-strategy          'refetch-index)
 
       (treemacs-follow-mode t)
-      (treemacs-tag-follow-mode t)
+      ;;(treemacs-tag-follow-mode t)
       (setq treemacs-tag-follow-delay 1.0)
       (treemacs-filewatch-mode t)
-      (treemacs-git-mode t)
       (treemacs-git-mode 'extended))
     :bind
     (:map global-map
@@ -1499,12 +1498,14 @@ Setup racer, flycheck and company:
     :after rust-mode
     :hook (rust-mode . racer-mode)
     :config
+    (setenv "PATH" (concat (getenv "PATH") (substitute-in-file-name ":$HOME/.cargo/bin/")))
+    (add-to-list 'exec-path (substitute-in-file-name "$HOME/.cargo/bin/"))
+
     (add-hook 'rust-mode-hook #'eldoc-mode)
 
-    (setq racer-cmd (or (executable-find "racer")
-                        (expand-file-name "racer/target/release/racer" +rust-src-dir))
+    (setq racer-cmd (executable-find "racer")
           racer-rust-src-path (or (getenv "RUST_SRC_PATH")
-                                  (expand-file-name "rust/src/" +rust-src-dir)))
+                                  (expand-file-name "rust/src/" (substitute-in-file-name "$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/"))))
 
     (unless (file-exists-p racer-cmd)
       (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))

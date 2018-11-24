@@ -97,6 +97,12 @@ tangled, and the tangled file is compiled."
 ** Startup
 
 #+BEGIN_SRC emacs-lisp
+
+;; Without this, my emacs version doesn't work, will probably break somithing
+(defconst debian-emacs-flavor 'emacs26
+   "A symbol representing the particular debian flavor of emacs running.
+ Something like 'emacs20, 'xemacs20, etc.")
+
   (require 'package)
 
   ;; Add melpa
@@ -193,8 +199,8 @@ Disk space is cheap. Save lots.
 (setq vc-make-backup-files t)
 (setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
 
-(desktop-save-mode 1)
-(setq desktop-load-locked-desktop t)
+;;(desktop-save-mode-off)
+;;(setq desktop-load-locked-desktop nil)
 (savehist-mode 1)
 (add-to-list 'savehist-additional-variables 'kill-ring)
 
@@ -215,9 +221,11 @@ Remove useless clutter
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
+(toggle-scroll-bar -1) 
 (setq inhibit-startup-screen t)
 (setq ring-bell-function 'ignore)
 (fset 'yes-or-no-p 'y-or-n-p)
+(global-unset-key (kbd "C-x C-c"))
 #+END_SRC
 
 Set theme and welcome message

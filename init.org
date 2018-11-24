@@ -310,6 +310,12 @@ sequentially."
 *** Modeline configuration
 
 #+BEGIN_SRC emacs-lisp
+  (use-package ein)
+  (use-package all-the-icons)
+  (use-package spaceline-all-the-icons)
+  (use-package nyan-mode)
+  (use-package anzu)
+  (use-package flycheck)
   (use-package spaceline
     ;;:require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
     :demand
@@ -410,6 +416,11 @@ contents of the minibuffer before submitting it.
   :init (miniedit-install))
 #+END_SRC
 
+*** Use cheat-sheets to remember commands
+#+BEGIN_SRC emacs-lisp
+(use-package cheatsheet
+  :bind (("C-h x" . cheatsheet-show)))
+#+END_SRC
 *** Undo tree mode - visualize your undos and branches
 
 People often struggle with the Emacs undo model, where there's really no concept of "redo" - you simply undo the undo.
@@ -427,7 +438,7 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 		 ("C-S-z" . undo-tree-redo)))
 #+END_SRC
 
-*** Help - guide-key
+*** Help - which-key and discover-my-major
 
 It's hard to remember keyboard shortcuts. The =which-key= package pops up help after a short delay.
 
@@ -501,7 +512,6 @@ Never turn this off
 #+END_SRC
 
 *** Highlight cursor when screen moves
-
 #+BEGIN_SRC emacs-lisp
   (use-package beacon
     :ensure t
@@ -509,6 +519,7 @@ Never turn this off
     :init
     (beacon-mode 1))
 #+END_SRC
+
 
 ** Navigation
 *** Tabs to switch buffers
@@ -640,8 +651,8 @@ Use IBuffer with =C-x C-b= to better organize current buffers
 		 ("C-x *" . highlight-symbol-prev)))
 #+END_SRC
 
-** Org-mode
 
+** Org-mode
 *** Modules
 Org has a whole bunch of optional modules. These are the ones I'm
 currently experimenting with.
@@ -894,6 +905,31 @@ Use =Projectile= for project management. Start with =C-c p=
   (setq projectile-mode-line '(:eval (format "[%s]" (projectile-project-name)))))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(cheatsheet-add-group 'Projectile
+                      '(:key "C-c p p" :description "Switch project")
+                      '(:key "C-c p f" :description "Find file in project")
+                      '(:key "C-c p b" :description "Find buffer in project")
+
+                      '(:key "C-c p a" :description "Switch to similar file (ext)")
+
+                      '(:key "C-c p j" :description "Find tag in project")
+                      '(:key "C-c p o" :description "Multi-occur in project")
+                      '(:key "C-c p r" :description "Replace in project")
+                      '(:key "C-c p t" :description "Toggle between test and impl")
+
+                      '(:key "C-c p O a" :description "Open project agenda")
+
+                      '(:key "C-c p s g" :description "Grep in project")
+                      '(:key "C-c p s i" :description "Git grep in project")
+                      '(:key "C-c p s r" :description "Ripgrep in project")
+
+                      '(:key "C-c p u" :description "Run project")
+                      '(:key "C-c p C" :description "Configure project")
+                      '(:key "C-c p c" :description "Build project")
+                      '(:key "C-c p P" :description "Test project"))
+#+END_SRC
+
 *** Perspective
 
 Use =Perspective= for workspaces. A workspace is called a perspective. Commands are prefixed by =C-x x=:
@@ -915,6 +951,19 @@ The important ones are probably s, a, n, and p.
   :diminish
   :init
   (persp-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+
+(cheatsheet-add-group 'Perspective
+                      '(:key "C-x x s" :description "Switch perspective")
+                      '(:key "C-x x k" :description "Remove from current perspective")
+                      '(:key "C-x x c" :description "Kill perspective")
+                      '(:key "C-x x r" :description "Rename current perspective")
+                      '(:key "C-x x a" :description "Add to current perspective")
+                      '(:key "C-x x A" :description "Add to current perspective and remove from all others")
+                      '(:key "C-x x n" :description "Next perspective")
+                      '(:key "C-x x p" :description "Prev perspective"))
 #+END_SRC
 
 *** Ivy
@@ -1002,13 +1051,15 @@ Experiment using =C-p= for project administration (TODO).
           ("C-c 1"      . treemacs-delete-other-windows)
           ("C-c tn"     . treemacs)
           ("C-c tB"     . treemacs-bookmark)
-          ("C-c t C-t"  . treemacs-find-file)
+          ("C-c t f"  . treemacs-find-file)
           ("C-c t M-t"  . treemacs-find-tag)))
 #+END_SRC
 
 Use treemacs constrained to the projectile project.
 
 #+BEGIN_SRC emacs-lisp
+(req-package treemacs)
+(req-package projectile)
 (req-package treemacs-projectile
   :require treemacs projectile
   :ensure t
@@ -1016,6 +1067,13 @@ Use treemacs constrained to the projectile project.
   (setq treemacs-header-function #'treemacs-projectile-create-header)
   :bind (:map global-map
               ("C-c tt" . treemacs-projectile)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(cheatsheet-add-group 'Treemacs
+                      '(:key "C-c t t" :description "Treemacs projectile")
+                      '(:key "C-c t f" :description "Find file")
+                      '(:key "C-c t B" :description "Find bookmark"))
 #+END_SRC
 
 ** C and Family
@@ -1140,7 +1198,9 @@ Mostly use =M-.= to jump to symbol.
 Use =ivy= to browse the tags.
 
 #+BEGIN_SRC emacs-lisp
-  (req-package ivy-rtags
+(req-package ivy)
+(req-package rtags)
+(req-package ivy-rtags
     :ensure t
     :require ivy rtags
     :config
@@ -1153,25 +1213,28 @@ Use =ivy= to browse the tags.
 On the first run, =irony-mode= will ask you to build and install =irony-server=. To do so, type =M-x irony-install-server= RET.
 
 #+BEGIN_SRC emacs-lisp
-    (req-package irony
-      :ensure t
-      :require flycheck-irony company-irony irony-eldoc
-      :diminish
-      :commands irony-install-server
-      :init
-      (add-hook 'c++-mode-hook 'irony-mode)
-      (add-hook 'c-mode-hook 'irony-mode)
-      (add-hook 'objc-mode-hook 'irony-mode)
+  (req-package flycheck-irony)
+  (req-package company-irony)
+  (req-package irony-eldoc)
+  (req-package irony
+    :ensure t
+    :require flycheck-irony company-irony irony-eldoc
+    :diminish
+    :commands irony-install-server
+    :init
+    (add-hook 'c++-mode-hook 'irony-mode)
+    (add-hook 'c-mode-hook 'irony-mode)
+    (add-hook 'objc-mode-hook 'irony-mode)
 
-      (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+    (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
 
-      ;; Company completion
-      (eval-after-load 'company
-        '(add-to-list 'company-backends 'company-irony))
+    ;; Company completion
+    (eval-after-load 'company
+      '(add-to-list 'company-backends 'company-irony))
 
-      ;; Checker with flycheck
-      (eval-after-load 'flycheck
-        '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup)))
+    ;; Checker with flycheck
+    (eval-after-load 'flycheck
+      '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup)))
 #+END_SRC
 
 *** Convenience
@@ -1190,6 +1253,10 @@ Switch between header and source files with =C-c o= and compile with =C-c b=.
 Use elpy with flycheck, ein, and jedi. These executables will probably have to be installed separately by the system package manager. Run =elpy-config= to set paths and other stuff.
 
 #+BEGIN_SRC emacs-lisp
+(req-package flycheck)
+(req-package py-autopep8)
+(req-package ein)
+(req-package jedi)
 (req-package elpy
   :ensure t
   :require flycheck py-autopep8 ein jedi
@@ -1258,6 +1325,9 @@ Use Slime for the actual editing.
 Use clojure with Cider.
 
 #+BEGIN_SRC emacs-lisp
+(req-package clojure-mode-extra-font-locking)
+(req-package cider)
+(req-package paredit)
 (req-package clojure-mode
   :ensure t
   :require clojure-mode-extra-font-locking cider paredit
@@ -1428,6 +1498,17 @@ Useful keybindings:
 | =C-c C-r=   | intero-apply-suggestion        | Apply =GHC= suggestion   |
 |             |                                |                          |
 
+#+BEGIN_SRC emacs-lisp
+(cheatsheet-add-group 'Haskell
+                      '(:key "C-c ! l" :description "List errors")
+                      '(:key "C-c ! n" :description "Jump to next error")
+
+                      '(:key "M-." :description "Go to symbol definition")
+                      '(:key "C-c C-t" :description "Show type at cursor")
+                      '(:key "C-u C-c C-t" :description "Insert type of thing at cursor")
+                      '(:key "C-c C-i" :description "Show inof of thing at point")
+                      '(:key "C-c C-r" :description "Apply suggestion"))
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
   (use-package haskell-mode
@@ -1438,7 +1519,8 @@ Useful keybindings:
                   ("runhaskell" . haskell-mode))
     :config
     (load "haskell-mode-autoloads" nil t)
-    (autoload 'switch-to-haskell "inf-haskell" nil t))
+    (autoload 'switch-to-haskell "inf-haskell" nil t)
+    (add-hook 'haskell-mode-hook 'haskell-auto-insert-module-template))
 #+END_SRC
 
 Setup intero:
@@ -1452,12 +1534,11 @@ Setup intero:
     (add-hook 'haskell-mode-hook
               (lambda ()
                 (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
-    (add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
-    :config
-    (haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
-    (haskell-process-auto-import-loaded-modules t)
+    ;(add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
+    (setq haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
+    ;(haskell-process-auto-import-loaded-modules t)
     (haskell-process-log t)
-    (haskell-process-suggest-hoogle-imports t)
+    ;(haskell-process-suggest-hoogle-imports t)
     (haskell-process-suggest-remove-import-lines t)
     (haskell-process-type (quote cabal-repl))
     (haskell-tags-on-save t))
@@ -1500,7 +1581,8 @@ Rust support to Emacs.
 Setup racer, flycheck and company:
 
 #+BEGIN_SRC emacs-lisp
-  (req-package racer
+(req-package rust-mode)
+(req-package racer
     :ensure t
     :require rust-mode
     :diminish
@@ -1520,7 +1602,8 @@ Setup racer, flycheck and company:
       (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))
 
 
-  (req-package company-racer
+(req-package company)
+(req-package company-racer
     :ensure t
     :require company
     :after racer
@@ -1529,7 +1612,8 @@ Setup racer, flycheck and company:
       (add-to-list 'company-backends 'company-racer)))
 
 
-  (req-package flycheck-rust
+(req-package flycheck)
+(req-package flycheck-rust
     :ensure t
     :require flycheck
     :after rust-mode

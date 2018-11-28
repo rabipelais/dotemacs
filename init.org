@@ -220,7 +220,6 @@ Remove useless clutter
 #+BEGIN_SRC emacs-lisp
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-(scroll-bar-mode -1)
 (toggle-scroll-bar -1) 
 (setq inhibit-startup-screen t)
 (setq ring-bell-function 'ignore)
@@ -638,7 +637,14 @@ Use IBuffer with =C-x C-b= to better organize current buffers
   (open-line arg)
   (when newline-and-indent
     (indent-according-to-mode)))
-(global-set-key (kbd "M-o") 'open-previous-line)
+(global-set-key (kbd "C-S-o") 'open-previous-line)
+#+END_SRC
+
+*** Use ace-window to navigate windows
+#+BEGIN_SRC emacs-lisp
+(require 'ace-window)
+(global-set-key (kbd "M-o") 'ace-window)
+(setq aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o))
 #+END_SRC
 
 *** Highlight symbol like Vim's "*"
@@ -1511,6 +1517,7 @@ Useful keybindings:
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+  (use-package w3m)
   (use-package haskell-mode
     :mode "\\.hs$"
     :mode ("\\.ghci$" . ghci-script-mode)

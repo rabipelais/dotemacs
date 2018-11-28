@@ -231,7 +231,15 @@ Set theme and welcome message
 
 #+BEGIN_SRC emacs-lisp
 (use-package zenburn-theme :ensure zenburn-theme)
-(load-theme 'zenburn t)
+;(load-theme 'zenburn t)
+
+;(use-package moe-theme)
+;(moe-dark)
+
+(use-package doom-themes)
+(load-theme 'doom-one t)
+(doom-themes-treemacs-config)
+(doom-themes-org-config)
 
 (global-linum-mode 0)
 

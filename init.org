@@ -1731,4 +1731,6 @@ Setup racer, flycheck and company:
 (require 'company-ghc)
 (require 'spaceline)
 (req-package-finish)
+
+(toggle-scroll-bar -1)
 #+END_SRC

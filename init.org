@@ -230,7 +230,7 @@ Remove useless clutter
 Set theme and welcome message
 
 #+BEGIN_SRC emacs-lisp
-(use-package zenburn-theme :ensure zenburn-theme)
+;(use-package zenburn-theme :ensure zenburn-theme)
 ;(load-theme 'zenburn t)
 
 ;(use-package moe-theme)

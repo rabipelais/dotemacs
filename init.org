@@ -354,8 +354,10 @@ sequentially."
     ;; (evil-mode 1)
     ;; (setq evil-default-state 'emacs)
 
+    (require 'all-the-icons)
     (require 'spaceline-config)
     (require 'spaceline-segments)
+    (setq inhibit-compacting-font-caches t)
 
     ;; Custom faces for vc-mode
     (defgroup +doom-modeline nil

@@ -317,14 +317,33 @@ sequentially."
 *** Modeline configuration
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ein)
-  (use-package all-the-icons)
-  (use-package spaceline-all-the-icons)
-  (use-package nyan-mode)
-  (use-package anzu)
-  (use-package flycheck)
+  (use-package ein :ensure t)
+  (use-package all-the-icons 
+    :ensure t)
+  (use-package all-the-icons-dired
+    :ensure t
+    :init
+    (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+
+  (use-package quelpa :ensure t)
+  (quelpa
+    '(quelpa-use-package
+     :fetcher git
+     :url "https://framagit.org/steckerhalter/quelpa-use-package.git"))
+  (require 'quelpa-use-package)
+  (use-package font-lock+
+    :quelpa
+    (font-lock+ :repo "emacsmirror/font-lock-plus" :fetcher github))
+  (require 'font-lock+)
+
+
+  (use-package spaceline-all-the-icons :ensure t)
+  (use-package nyan-mode :ensure t)
+  (use-package anzu :ensure t)
+  (use-package flycheck :ensure t)
   (use-package spaceline
-    ;;:require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
+    ;;;; :require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
+    :ensure t
     :demand
     :config
     (setq nyan-wavy-trail t)

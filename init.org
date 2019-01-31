@@ -1118,16 +1118,16 @@ Experiment using =C-p= for project administration (TODO).
     :config
     (progn
       (setq treemacs-follow-after-init          t
-            treemacs-width                      28
-            treemacs-indentation                2
-            treemacs-collapse-dirs              (if (executable-find "python") 3 0)
-            treemacs-silent-refresh             nil
-            treemacs-change-root-without-asking nil
-            treemacs-sorting                    'alphabetic-desc
-            treemacs-show-hidden-files          t
-            treemacs-never-persist              nil
-            treemacs-is-never-other-window      nil
-            treemacs-goto-tag-strategy          'refetch-index)
+	    treemacs-width                      28
+	    treemacs-indentation                2
+	    treemacs-collapse-dirs              (if (executable-find "python") 3 0)
+	    treemacs-silent-refresh             nil
+	    treemacs-change-root-without-asking nil
+	    treemacs-sorting                    'alphabetic-desc
+	    treemacs-show-hidden-files          t
+	    treemacs-never-persist              nil
+	    treemacs-is-never-other-window      nil
+	    treemacs-goto-tag-strategy          'refetch-index)
 
       (treemacs-follow-mode t)
       ;;(treemacs-tag-follow-mode t)
@@ -1136,27 +1136,27 @@ Experiment using =C-p= for project administration (TODO).
       (treemacs-git-mode 'extended))
     :bind
     (:map global-map
-          ([f8]         . treemacs-toggle)
-          ("M-0"        . treemacs-select-window)
-          ("C-c 1"      . treemacs-delete-other-windows)
-          ("C-c tn"     . treemacs)
-          ("C-c tB"     . treemacs-bookmark)
-          ("C-c t f"  . treemacs-find-file)
-          ("C-c t M-t"  . treemacs-find-tag)))
+	  ([f8]         . treemacs-toggle)
+	  ("M-0"        . treemacs-select-window)
+	  ("C-c 1"      . treemacs-delete-other-windows)
+	  ("C-c tn"     . treemacs)
+	  ("C-c tB"     . treemacs-bookmark)
+	  ("C-c t f"  . treemacs-find-file)
+	  ("C-c t M-t"  . treemacs-find-tag)))
 #+END_SRC
 
 Use treemacs constrained to the projectile project.
 
 #+BEGIN_SRC emacs-lisp
-(req-package treemacs)
-(req-package projectile)
-(req-package treemacs-projectile
-  :require treemacs projectile
-  :ensure t
-  :config
-  (setq treemacs-header-function #'treemacs-projectile-create-header)
-  :bind (:map global-map
-              ("C-c tt" . treemacs-projectile)))
+  (use-package treemacs)
+  (use-package projectile)
+  (use-package treemacs-projectile
+    ;; :require treemacs projectile
+    :ensure t
+    :config
+    (setq treemacs-header-function #'treemacs-projectile-create-header)
+    :bind (:map global-map
+		("C-c tt" . treemacs-projectile)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1288,11 +1288,11 @@ Mostly use =M-.= to jump to symbol.
 Use =ivy= to browse the tags.
 
 #+BEGIN_SRC emacs-lisp
-(req-package ivy)
-(req-package rtags)
-(req-package ivy-rtags
+(use-package ivy)
+(use-package rtags)
+(use-package ivy-rtags
     :ensure t
-    :require ivy rtags
+    ;; :require ivy rtags
     :config
     (setq rtags-display-result-backend 'ivy))
 #+END_SRC
@@ -1303,12 +1303,12 @@ Use =ivy= to browse the tags.
 On the first run, =irony-mode= will ask you to build and install =irony-server=. To do so, type =M-x irony-install-server= RET.
 
 #+BEGIN_SRC emacs-lisp
-  (req-package flycheck-irony)
-  (req-package company-irony)
-  (req-package irony-eldoc)
-  (req-package irony
+  (use-package flycheck-irony)
+  (use-package company-irony)
+  (use-package irony-eldoc)
+  (use-package irony
     :ensure t
-    :require flycheck-irony company-irony irony-eldoc
+    ;; :require flycheck-irony company-irony irony-eldoc
     :diminish
     :commands irony-install-server
     :init
@@ -1343,13 +1343,13 @@ Switch between header and source files with =C-c o= and compile with =C-c b=.
 Use elpy with flycheck, ein, and jedi. These executables will probably have to be installed separately by the system package manager. Run =elpy-config= to set paths and other stuff.
 
 #+BEGIN_SRC emacs-lisp
-(req-package flycheck)
-(req-package py-autopep8)
-(req-package ein)
-(req-package jedi)
-(req-package elpy
+(use-package flycheck)
+(use-package py-autopep8)
+(use-package ein)
+(use-package jedi)
+(use-package elpy
   :ensure t
-  :require flycheck py-autopep8 ein jedi
+  ;; :require flycheck py-autopep8 ein jedi
   :diminish elpy-mode
   :diminish highlight-indentation-mode
   :config
@@ -1415,12 +1415,12 @@ Use Slime for the actual editing.
 Use clojure with Cider.
 
 #+BEGIN_SRC emacs-lisp
-(req-package clojure-mode-extra-font-locking)
-(req-package cider)
-(req-package paredit)
-(req-package clojure-mode
+(use-package clojure-mode-extra-font-locking)
+(use-package cider)
+(use-package paredit)
+(use-package clojure-mode
   :ensure t
-  :require clojure-mode-extra-font-locking cider paredit
+  ;; :require clojure-mode-extra-font-locking cider paredit
 ;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
   :config
   (progn
@@ -1643,9 +1643,9 @@ Setup intero:
 Company for completion:
 
 #+BEGIN_SRC emacs-lisp
-  (req-package company-ghc
+  (use-package company-ghc
     :ensure t
-    :require haskell-mode company
+    ;; :require haskell-mode company
     :after haskell-mode
     :diminish
     :init
@@ -1673,10 +1673,10 @@ Rust support to Emacs.
 Setup racer, flycheck and company:
 
 #+BEGIN_SRC emacs-lisp
-(req-package rust-mode)
-(req-package racer
+(use-package rust-mode)
+(use-package racer
     :ensure t
-    :require rust-mode
+    ;; :require rust-mode
     :diminish
     :after rust-mode
     :hook (rust-mode . racer-mode)
@@ -1694,24 +1694,25 @@ Setup racer, flycheck and company:
       (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))
 
 
-(req-package company)
-(req-package company-racer
+(use-package company)
+(use-package company-racer
     :ensure t
-    :require company
+    ;; :require company
     :after racer
     :config
     (with-eval-after-load 'company
       (add-to-list 'company-backends 'company-racer)))
 
 
-(req-package flycheck)
-(req-package flycheck-rust
+(use-package flycheck)
+(use-package flycheck-rust
     :ensure t
-    :require flycheck
+    ;; :require flycheck
     :after rust-mode
     :hook (flycheck-mode . flycheck-rust-setup)
     :config (add-hook 'rust-mode-hook #'flycheck-mode))
 #+END_SRC
+
 
 
 * Bookend

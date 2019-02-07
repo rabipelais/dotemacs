@@ -1,11 +1,11 @@
+
 #+TITLE: Sebas Emacs configuration
 #+OPTIONS: toc:4 h:4
 #+BABEL: :cache yes
 #+PROPERTY: header-args :tangle init.el
 #+PROPERTY: tangle init.el
 
-* General Configuration
-** About this file
+* About this file
    :PROPERTIES:
    :CUSTOM_ID: babel-init
    :END:
@@ -14,7 +14,7 @@
 This is my attempt at making a literate Emacs config file.
 To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v t=).
 
-** Meta
+* Meta
 
 All changes to the configuration should be done in =init.org=, *not* in
 =init.el=. Any changes in the =init.el= will be overwritten by saving
@@ -29,7 +29,7 @@ could just use =org-babel-load-file=, but I had problems with
 byte-compilation. Previously I tracked both the =org.=- and =el.=-files,
 but the git commits got a little messy. So here is a new approach.
 
-When this configuration is loaded for the first time, the ~init.el~ is
+When this configuration is loaded for the first time, the =init.el= is
 the file that is loaded. It looks like this:
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -93,7 +93,34 @@ tangled, and the tangled file is compiled."
 
 (add-hook 'after-save-hook 'tangle-init)
 #+END_SRC
+* External dependencies
+To be able to use some of the funtions in this configuration, you need some external dependencies:
 
+- The Fira Code font
+- Rust compiler
+- Racer
+- All-the-icons fonts
+
+Other mode and language specific dependencies are more obvious and described in their respective sections
+
+** Fira Code
+Can be downloaded from here: [[https://github.com/tonsky/FiraCode][github repository]]. To support ligatures, you may also need the extended Symbol codepoints, which can be downloaded from [[https://github.com/tonsky/FiraCode/files/412440/FiraCode-Regular-Symbol.zip][here.]]
+
+** Rust
+To install Rust simply follow the instructions on [[https://www.rust-lang.org/tools/install][this page.]]
+
+** Racer
+Using =cargo= run =cargo +nightly install racer=
+
+** All-the-icons fonts
+Make sure the =all-the-icons= package is loaded and then run =M-x all-the-icons-install-fonts=. Restarting emacs may be required.
+If it starts lagging like an absolute sloth or is showing wrong symbols, be sure =(setq inhibit-compacting-font-cache t)= is evaluated (it is in this config).
+To test if the icons work, you can run =(all-the-icons-insert-icons-for 'alltheicon)= (warning: them's a lot of icons).
+
+
+(TODO: make emacs not error out sometimes if Racer or Rust are not present)
+
+* General Configuration
 ** Startup
 
 #+BEGIN_SRC emacs-lisp
@@ -893,7 +920,7 @@ Use =sp-cheat-sheet= for an overview of commands.
 
 *** Company and Flycheck
 
-Setup =company= and =flycheck= for code completion.
+ Setup =company= and =flycheck= for code completion.
 
 #+BEGIN_SRC emacs-lisp
   (use-package company
@@ -1567,8 +1594,8 @@ Change reftex-var to markdown-pandoc format, so they can be parsed and converted
 
 ** Haskell
 
-Use intero for the editing. TODO: test again between intero, dante, ghc-mod, and such.
-Also automatically run =haskell-mode-stylish-buffer= on save. Intero *requires* =stack= and =ghc-mod=.
+Use intero for the editing. TODO: test again between intero, dante, ghc-mod, and such. TODONE: intero has hands down the best support for =stack=, which definitely should be used. I couldn't test =dante= extensively.
+Also automatically run =haskell-mode-stylish-buffer= on save. Intero *requires* =stack= and =ghc-mod= (installed as executables in the PATH).
 
 - Code completion (company-ghc)
 - Look up documentation (hoogle)

@@ -1,4 +1,3 @@
-
 #+TITLE: Sebas Emacs configuration
 #+OPTIONS: toc:4 h:4
 #+BABEL: :cache yes
@@ -592,6 +591,10 @@ Never turn this off
 (setq ido-everywhere t)
 #+END_SRC
 
+*** Under X, killing and yanking uses the X clipboard rather than just the primary selection
+#+BEGIN_SRC emacs-lisp
+ (setq save-interprogram-paste-before-kill t)
+#+END_SRC
 *** Smoother scrolling
 
 #+BEGIN_SRC emacs-lisp
@@ -630,6 +633,11 @@ Never turn this off
     (beacon-mode 1))
 #+END_SRC
 
+*** `M-/` bound to `hippie-expand`
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-/") 'hippie-expand)
+#+END_SRC
+
 
 ** Navigation
 *** Tabs to switch buffers
@@ -638,7 +646,7 @@ Use Ctrl+Tab and Shift+Ctrl+Tab to switch buffers like in Firefox. TODO: This co
 
 #+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "<C-tab>") 'next-buffer)
-(global-set-key (kbd "<C-S-iso-lefttab>") 'previous-buffer)
+(global-set-key (kbd "<C-S-tab>") 'previous-buffer)
 #+END_SRC
 
 *** Pop to mark
@@ -766,6 +774,14 @@ Use IBuffer with =C-x C-b= to better organize current buffers
   :diminish
   :bind (("C-*" . highlight-symbol-next)
 		 ("C-x *" . highlight-symbol-prev)))
+#+END_SRC
+
+*** `zap-up-to-char` instead of `zap-to-char` bound to `M-z`
+#+BEGIN_SRC emacs-lisp
+  (autoload 'zap-up-to-char "misc"
+    "Kill up to, but not including ARGth occurrence of CHAR." t)
+
+  (global-set-key (kbd "M-z") 'zap-up-to-char)
 #+END_SRC
 
 
@@ -1762,4 +1778,12 @@ Setup racer, flycheck and company:
 (req-package-finish)
 
 (toggle-scroll-bar -1)
+
+;; Remove pesky scroll bars
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
+(when (fboundp 'horizontal-scroll-bar-mode)
+  (horizontal-scroll-bar-mode -1))
 #+END_SRC

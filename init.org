@@ -207,6 +207,7 @@ Setup a splash screen
 
 #+BEGIN_SRC emacs-lisp
 (use-package dash)
+(add-to-list 'load-path "~/.emacs.d/site-lisp")
 #+END_SRC
 
 *** Backups
@@ -841,6 +842,27 @@ Useful template to insert elisp code blocks:
 
 =append-next-kill= is more useful to me than =org-table-copy-region=.
 
+*** Org-ref
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-ref
+    :ensure t
+    :init
+    (setq org-ref-bibliography-notes "~/bibliography/notes.org"
+	  org-ref-default-bibliography '("~/bibliography/references.bib")
+	  org-ref-pdf-directory "~/bibliography/bibtex-pdfs/"))
+#+END_SRC
+
+*** Interleave-mode
+#+BEGIN_SRC emacs-lisp
+  (use-package interleave
+    :ensure t)
+#+END_SRC
+
+*** Calibre-mode
+#+BEGIN_SRC emacs-lisp
+(require 'calibre-mode)
+#+END_SRC
 
 * Programming
 

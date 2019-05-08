@@ -975,8 +975,8 @@ Use =sp-cheat-sheet= for an overview of commands.
     :config
     (progn
       (global-flycheck-mode t)
-      ;; because git-gutter is in the left fringe
-      (setq flycheck-indication-mode 'right-fringe)
+      ;; because git-gutter is in the right fringe
+      (setq flycheck-indication-mode 'left-fringe)
       ;; A non-descript, left-pointing arrow
       (fringe-helper-define 'flycheck-fringe-bitmap-double-arrow 'center
         "...X...."
@@ -1027,6 +1027,8 @@ Show git statuses on the gutter
       (git-gutter+-enable-fringe-display-mode)
       ;; places the git gutter outside the margins.
       (setq-default fringes-outside-margins t)
+      ;; Fringe on the right side
+      (setq git-gutter-fr:side 'right-fringe)
       ;; Set not-so-bright colours
       (set-face-foreground 'git-gutter-fr+-modified "goldenrod1")
       (set-face-foreground 'git-gutter-fr+-added    "chartreuse3")

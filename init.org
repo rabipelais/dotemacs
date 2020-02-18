@@ -1010,11 +1010,11 @@ Use =sp-cheat-sheet= for an overview of commands.
       ;; A non-descript, left-pointing arrow
       (fringe-helper-define 'flycheck-fringe-bitmap-double-arrow 'center
         "...X...."
-        "..XX...."
-        ".XXX...."
-        "XXXX...."
-        ".XXX...."
-        "..XX...."
+        "...XX..."
+        "...XXX.."
+        "...XXXX."
+        "...XXX.."
+        "...XX..."
         "...X....")))
 #+END_SRC
 

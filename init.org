@@ -899,15 +899,59 @@ Useful template to insert elisp code blocks:
 	  org-ref-pdf-directory "~/bibliography/bibtex-pdfs/"))
 #+END_SRC
 
-*** Interleave-mode
+*** Org-noter
 #+BEGIN_SRC emacs-lisp
-  (use-package interleave
+  (use-package org-noter
     :ensure t)
+#+END_SRC
+
+*** Org-roam
+Utility for note taking and file organization. Based on the whole *Build a Second Brain* idea.
+#+BEGIN_SRC emacs-lisp
+  (use-package org-roam
+        :after org
+        :hook 
+        ((org-mode . org-roam-mode)
+         (after-init . org-roam--build-cache-async))
+	:straight (:host github :repo "jethrokuan/org-roam" :branch "develop")
+        :custom
+        (org-roam-directory "~/braindump")
+        :bind
+        ("C-c n l" . org-roam)
+        ("C-c n t" . org-roam-today)
+        ("C-c n f" . org-roam-find-file)
+        ("C-c n i" . org-roam-insert)
+        ("C-c n g" . org-roam-show-graph))
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+(cheatsheet-add-group 'Org_Roaming_and_Noting
+                      '(:key "C-c n l" :description "Pops up the org-roam buffer")
+                      '(:key "C-c n t" :description "Open the document for today")
+                      '(:key "C-c n f" :description "Find an org-roam file or create")
+                      '(:key "C-c n i" :description "Find and insert roam file at point")
+                      '(:key "C-c n g" :description "Show graph (not really useful?)")
+                      '(:key "C-c n d" :description "Open *Deft* buffer"))
+#+END_SRC
+
+*** Deft
+#+BEGIN_SRC emacs-lisp
+  (use-package deft
+    :after org
+    :bind
+    ("C-c n d" . deft)
+    :custom
+    (deft-recursive t)
+    (deft-use-filter-string-for-filename t)
+    (deft-default-extension "org")
+    (deft-directory "~/braindump"))
 #+END_SRC
 
 *** Calibre-mode
 #+BEGIN_SRC emacs-lisp
-(require 'calibre-mode)
+  (require 'calibre-mode)
+  (setq sql-sqlite-program "C:\\SQLite\\sqlite3.exe")
 #+END_SRC
 
 * Programming

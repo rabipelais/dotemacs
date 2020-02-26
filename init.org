@@ -868,6 +868,23 @@ Use IBuffer with =C-x C-b= to better organize current buffers
 
 
 ** Org-mode
+*** General configuration
+Asterisks and dashes for bullet lists are fine, but having an actual circular bullet, is just nice:
+
+#+BEGIN_SRC emacs-lisp
+  (font-lock-add-keywords 'org-mode
+			  '(("^ +\\([-*]\\) "
+			     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+#+END_SRC
+
+This code uses a regular expression of lines with initial spaces, followed by either a dash or asterisks and a single space into a Unicode bullet.
+
+Sure /org italic/ characters look kinda like slanted words, but with the added baggage of having regular expression characters in your prose. Hide them with a simple setting:
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-hide-emphasis-markers t)
+#+END_SRC
+
 *** Modules
 Org has a whole bunch of optional modules. These are the ones I'm
 currently experimenting with.
@@ -926,12 +943,24 @@ Useful template to insert elisp code blocks:
 *** Org-ref
 
 #+BEGIN_SRC emacs-lisp
-  (use-package org-ref
-    :ensure t
-    :init
-    (setq org-ref-bibliography-notes "~/bibliography/notes.org"
-	  org-ref-default-bibliography '("~/bibliography/references.bib")
-	  org-ref-pdf-directory "~/bibliography/bibtex-pdfs/"))
+      (use-package org-ref
+	:ensure t
+	:init
+	(setq org-ref-notes-function
+	      (lambda (thekey)
+		(let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
+		  (bibtex-completion-edit-notes
+		   (list (car (org-ref-get-bibtex-key-and-file thekey)))))))
+	(setq reftex-default-bibliography '("~/braindump/references.bib"))
+	(setq org-ref-bibliography-notes "~/braindump/"
+	      org-ref-default-bibliography '("~/braindump/references.bib")
+	      org-ref-pdf-directory "~/bibtex-pdfs/")
+	(setq bibtex-completion-notes-path "~/braindump/")
+	(setq org-ref-completion-library 'org-ref-helm-bibtex)
+	(require 'doi-utils)
+	(require 'org-ref-isbn)
+	(require 'org-ref-pubmed)
+	(require 'org-ref-arxiv))
 #+END_SRC
 
 *** Org-noter

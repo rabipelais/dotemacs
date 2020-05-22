@@ -843,9 +843,13 @@ Use IBuffer with =C-x C-b= to better organize current buffers
 
 *** Use ace-window to navigate windows
 #+BEGIN_SRC emacs-lisp
-(require 'ace-window)
-(global-set-key (kbd "M-o") 'ace-window)
-(setq aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o))
+  (use-package ace-window
+    :ensure t
+    :bind
+    ("M-o" . 'ace-window)
+    :config
+    ;; For colemak
+    (setq aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o)))
 #+END_SRC
 
 *** Highlight symbol like Vim's "*"
@@ -945,9 +949,8 @@ Add templates:
 #+BEGIN_SRC emacs-lisp
   (setq org-capture-templates
 	'(("r" "Reading Queue" entry (file+headline "~/braindump/reading_queue.org" "Queue")
-	   "* TODO %?\nAdded on:%u\n  %i\n  %a on %f\n  %^g")))
+	   "* TODO %?: %i\nAdded on:%u\n  %a on %f\n  %^g")))
 #+END_SRC
-
 
 *** Org-ref
 
@@ -955,6 +958,8 @@ Add templates:
   (use-package org-ref
     :after org
     :ensure t
+    :hook
+    (after-init . (require 'org-ref))
     :init
     (setq org-ref-notes-function
 	  (lambda (thekey)
@@ -985,25 +990,24 @@ Add templates:
 
 *** Org-roam
 Utility for note taking and file organization. Based on the whole *Build a Second Brain* idea.
+
 #+BEGIN_SRC emacs-lisp
   (use-package org-roam
 	:after org
 	:hook 
-	((org-mode . org-roam-mode)
-	 (after-init . org-roam--build-cache-async))
-	:straight (:host github :repo "jethrokuan/org-roam")
+	(after-init . org-roam-mode)
 	:custom
 	(org-roam-directory "~/braindump")
-      
+	:config
 	(setq org-roam-capture-templates
 	  '(("d" "default" plain (function org-roam--capture-get-point)
 	     "%?"
-	     :file-name "%<%Y%m%d%H%M%S>-${slug}"
+	     :file-name "%<%Y%m%d%H%M%S>_${slug}"
 	     :head "#+TITLE: ${title}\n"
 	     :unnarrowed t)
 	    ("a" "Web article" plain (function org-roam--capture-get-point)
 	     "%?"
-	     :file-name "%<%Y%m%d%H%M%S>-${slug}"
+	     :file-name "%<%Y%m%d%H%M%S>_${slug}"
 	     :head "#+TITLE: ${title}\n\n- url :: \n- author :: \n- source :: [[file:20200218170914_article.org][Article]]\n- tags :: \n\n"
 	     :unnarrowed t)))
 	:bind
@@ -1011,7 +1015,7 @@ Utility for note taking and file organization. Based on the whole *Build a Secon
 	("C-c n t" . org-roam-today)
 	("C-c n f" . org-roam-find-file)
 	("C-c n i" . org-roam-insert)
-	("C-c n g" . org-roam-show-graph))
+	("C-c n g" . org-roam-graph-show))
 #+END_SRC
 
 
@@ -1040,8 +1044,8 @@ Utility for note taking and file organization. Based on the whole *Build a Secon
 
 *** Calibre-mode
 #+BEGIN_SRC emacs-lisp
-  (require 'calibre-mode)
-  (setq sql-sqlite-program "C:\\SQLite\\sqlite3.exe")
+  ;;(require 'calibre-mode)
+  ;;(setq sql-sqlite-program "C:\\SQLite\\sqlite3.exe")
 #+END_SRC
 
 * Programming

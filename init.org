@@ -902,45 +902,66 @@ Sure /org italic/ characters look kinda like slanted words, but with the added b
   (setq org-hide-emphasis-markers t)
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+  (use-package toc-org
+      :ensure t
+      :config
+      (progn
+	(add-hook 'org-mode-hook 'toc-org-mode)))
+#+END_SRC
+
+
 *** Modules
 Org has a whole bunch of optional modules. These are the ones I'm
 currently experimenting with.
 
 #+BEGIN_SRC emacs-lisp :drill:
-(setq org-modules '(org-bbdb
-                      org-gnus
-                      org-drill
-                      org-info
-                      org-jsinfo
-                      org-habit
-                      org-irc
-                      org-mouse
-                      org-protocol
-                      org-annotate-file
-                      org-eval
-                      org-expiry
-                      org-interactive-query
-                      org-man
-                      org-collector
-                      org-panel
-                      org-screen
-                      org-toc))
+(use-package org-contrib
+	:ensure t)
+(setq org-modules '(ol-bbdb
+		    org-tempo
+		    ol-bibtex
+		    ol-docview
+		    ol-gnus
+		    org-habit
+		    ol-info
+		    org-choose
+		    org-collector
+		    org-learn
+		    ol-man
+		    org-panel
+		    org-screen
+		    org-interactive-query
+		    org-annotate-file
+		    org-eval
+		    org-expiry
+		    org-toc
+		    org-drill
+		    org-jsinfo
+		    ol-irc))
 (eval-after-load 'org
- '(org-load-modules-maybe t))
+	     '(org-load-modules-maybe t))
 ;; Prepare stuff for org-export-backends
 (setq org-export-backends '(org latex icalendar html ascii))
 (setq org-goto-interface 'outline-path-completion
-      org-goto-max-level 10)
+	    org-goto-max-level 10)
 #+END_SRC
 
 
 Useful template to insert elisp code blocks:
 
 #+BEGIN_SRC emacs-lisp
-;; add <el for emacs-lisp expansion
-(eval-after-load 'org
-  '(add-to-list 'org-structure-template-alist
-             '("el" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>")))
+    ;; add <el for emacs-lisp expansion
+;    (eval-after-load 'org      
+;      '(add-to-list 'org-structure-template-alist
+;		 '("el" .  "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>")))
+(require 'org-tempo)  
+  (tempo-define-template "emacs-lisp" ; just some name for the template
+	     '("#+BEGIN_SRC emacs-lisp" n
+	       "#+END_SRC")
+	     "<el"
+	     "Insert an emacs lisp block" ; documentation
+	     'org-tempo-tags)
 #+END_SRC
 
 *** Keyboard shortcuts

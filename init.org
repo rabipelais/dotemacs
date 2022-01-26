@@ -13,6 +13,31 @@
 This is my attempt at making a literate Emacs config file.
 To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v t=).
 
+* Table of Contents                                                     :TOC_3:
+
+- [[#about-this-file][About this file]]
+- [[#meta][Meta]]
+- [[#external-dependencies][External dependencies]]
+  - [[#fira-code][Fira Code]]
+  - [[#rust][Rust]]
+  - [[#racer][Racer]]
+  - [[#all-the-icons-fonts][All-the-icons fonts]]
+- [[#general-configuration][General Configuration]]
+  - [[#startup][Startup]]
+  - [[#general-configuration][General Configuration]]
+  - [[#navigation][Navigation]]
+  - [[#org-mode][Org-mode]]
+- [[#programming][Programming]]
+  - [[#c-and-family][C and Family]]
+  - [[#python][Python]]
+  - [[#lisp-and-family][Lisp and Family]]
+  - [[#ocaml][OCaml]]
+  - [[#latexes][Latexes]]
+  - [[#haskell][Haskell]]
+  - [[#rust][Rust]]
+- [[#bookend][Bookend]]
+  - [[#resolve-dependency-graph-download-and-install][Resolve dependency graph, download, and install.]]
+
 * Meta
 
 All changes to the configuration should be done in =init.org=, *not* in
@@ -103,7 +128,7 @@ To be able to use some of the funtions in this configuration, you need some exte
 Other mode and language specific dependencies are more obvious and described in their respective sections
 
 ** Fira Code
-Can be downloaded from here: [[https://github.com/tonsky/FiraCode][github repository]]. To support ligatures, you may also need the extended Symbol codepoints, which can be downloaded from [[https://github.com/tonsky/FiraCode/files/412440/FiraCode-Regular-Symbol.zip][here.]]
+Can be downloaded from here: [[https://github.com/tonsky/FiraCode][github repository]]. To support ligatures, I now use ligatures.el, which is included, or can be downloaded from its repository.
 
 ** Rust
 To install Rust simply follow the instructions on [[https://www.rust-lang.org/tools/install][this page.]]
@@ -123,9 +148,11 @@ To test if the icons work, you can run =(all-the-icons-insert-icons-for 'allthei
 ** Startup
 
 #+BEGIN_SRC emacs-lisp
+;; First of all, load some local variables
+(load-file "./local-vars.el")
 
 ;; Without this, my emacs version doesn't work, will probably break somithing
-(defconst debian-emacs-flavor 'emacs26
+(defconst debian-emacs-flavor 'emacs27
    "A symbol representing the particular debian flavor of emacs running.
  Something like 'emacs20, 'xemacs20, etc.")
 
@@ -289,72 +316,58 @@ Set theme and welcome message
 (setq initial-scratch-message ";;; Welcome back, master. Happy hacking.")
 #+END_SRC
 
-Sort out fonts. Use Fira Code with ligatures. The whole chunk at the end is the glyph mapping
+Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less brittle.
 
 #+BEGIN_SRC emacs-lisp
-(set-default-font "-CTDB-Fira Code-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
-(setq default-frame-alist '((font . "Fira Code")))
-(set-face-attribute 'bold nil :family "Fira Code"
-					:height 110
-					:weight 'bold)
-
-;; Code points for ligatures
-(set-fontset-font t '(#Xe100 . #Xe16f) "Fira Code Symbol")
-(set-fontset-font "fontset-default" '(#Xe100 . #Xe16f) "Fira Code Symbol")
-(setq prettify-symbols-unprettify-at-point 'right-edge)
+    (set-frame-font "-CTDB-Fira Code-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
+    (setq default-frame-alist '((font . "Fira Code")))
+    (set-face-attribute 'bold nil :family "Fira Code"
+					    :height 110
+					    :weight 'bold)
 
 
-(defconst ligatures-fira-code-start #Xe100)
+    ;; Using ligature.el
+    (require 'ligature)
+    ;; Enable the "www" ligature in every possible major mode
+    (ligature-set-ligatures 't '("www"))
+    ;; Enable traditional ligature support in eww-mode, if the
+    ;; `variable-pitch' face supports it
+    (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+    (ligature-set-ligatures 'prog-mode '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
+				     ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
+				     "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
+				     "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
+				     "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
+				     "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
+				     "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
+				     "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
+				     "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
+				     "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
+    (ligature-set-ligatures 'org-mode '("www" "**/" "*>" "*/" "\\\\" "\\\\\\" "{-" "::"
+				     ":::" ":=" "!!" "!=" "!==" "-}" "----" "-->" "->" "->>"
+				     "-<" "-<<" "-~" "#{" "#[" "##" "###" "####" "#(" "#?" "#_"
+				     "#_(" ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*" "/**"
+				     "/=" "/==" "/>" "//" "///" "&&" "||" "||=" "|=" "|>" "^=" "$>"
+				     "++" "+++" "+>" "=:=" "==" "===" "==>" "=>" "=>>" "<="
+				     "=<<" "=/=" ">-" ">=" ">=>" ">>" ">>-" ">>=" ">>>" "<*"
+				     "<*>" "<|" "<|>" "<$" "<$>" "<!--" "<-" "<--" "<->" "<+"
+				     "<+>" "<=" "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<"
+				     "<~" "<~~" "</" "</>" "~@" "~-" "~>" "~~" "~~>" "%%"))
 
-(defconst ligatures-fira-code-list
-  '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
-    "{-" "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
-    "--" "---" "-->" "->" "->>" "-<" "-<<" "-~"
-    "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_("
-    ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*"
-    "/**" "/=" "/==" "/>" "//" "///" "&&" "||" "||="
-    "|=" "|>" "^=" "$>" "++" "+++" "+>" "=:=" "=="
-    "===" "==>" "=>" "=>>" "<=" "=<<" "=/=" ">-" ">="
-    ">=>" ">>" ">>-" ">>=" ">>>" "<*" "<*>" "<|" "<|>"
-    "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
-    "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
-    "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
-    "x" ":" "+" "+" "*")
-  "Ordered ligatures for Fira Code font")
+    ;; Enables ligature checks globally in all buffers. You can also do it
+    ;; per mode with `ligature-mode'.
+    (global-ligature-mode t)
+#+END_SRC
 
-(defun ligatures-correct-symbol-bounds (len char)
-  "Prepend up to LEN non-breaking spaces with reference points to CHAR.
-This way `compose-region' called by function `prettify-symbols-mode'
-will use the correct width of the symbols instead of the width
-measured by `char-width'."
-  (let ((acc (list char)))
-    (while (> len 1)
-      (setq acc (cons #X00a0 (cons '(Br . Bl) acc)))
-      (setq len (1- len)))
-    acc))
+More theming based on NANO emacs
 
-
-(defun ligatures-make-alist (ligatures starting-code)
-  "Construct text to ligature character.
-For each string in LIGATURES list add replacement from STARTING-CODE
-sequentially."
-  (mapcar (lambda (l)
-            (let ((n starting-code))
-              (setq starting-code (1+ starting-code))
-              (when l
-                (cons l (ligatures-correct-symbol-bounds
-                         (length l) n)))))
-          ligatures))
-
-(defun ligatures-fira-code-setup ()
-  "Add Fira Code ligatures to `prettify-symbols-alist'."
-  (setq prettify-symbols-alist (append (ligatures-make-alist
-                                        ligatures-fira-code-list
-                                        ligatures-fira-code-start)
-				       prettify-symbols-alist)))
-(ligatures-fira-code-setup)
-(global-prettify-symbols-mode 1)
-(global-prettify-symbols-mode)
+#+BEGIN_SRC emacs-lisp
+  (require 'nano-layout)
+  (require 'nano-faces)
+  (nano-faces)
+  (require 'nano-session)
+  (setq semantic-idle-breadcrumbs-format-tag-list-function #'semantic-idle-breadcrumbs--format-innermost-first)
+  (require 'nano-modeline)
 #+END_SRC
 
 *** Modeline configuration

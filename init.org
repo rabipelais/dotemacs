@@ -231,19 +231,19 @@ Install the startup profiler
 Setup a splash screen
 
 #+BEGIN_SRC emacs-lisp
-(use-package dashboard
-  :ensure t
-  :diminish dashboard-mode
-  :init
-  (setq dashboard-banner-logo-title "Help, I'm stuck in this computer.")
-  (setq dashboard-startup-banner 'logo)
-  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-  (setq dashboard-items '((recents  . 5)
-                        (bookmarks . 5)
-                        (projects . 5)
-                        (agenda . 5)
-                        (registers . 5)))
-  (dashboard-setup-startup-hook))
+  (use-package dashboard
+    :ensure t
+    :diminish dashboard-mode
+    :init
+    (setq dashboard-banner-logo-title "Help, I'm stuck in this computer.")
+    (setq dashboard-startup-banner 'logo)
+    (setq dashboard-items '((recents  . 5)
+			  (bookmarks . 5)
+			  (projects . 5)
+			  (agenda . 5)
+			  (registers . 5)))
+    (dashboard-setup-startup-hook)
+    (setq initial-buffer-choice (lambda () (get-buffer-create dashboard-buffer-name))))
 #+END_SRC
 
 ** General Configuration
@@ -996,15 +996,16 @@ Add templates:
     :hook
     (after-init . (require 'org-ref))
     :init
+    (setq references-file (concat seb/braindump-folder "/references.bib"))
     (setq org-ref-notes-function
 	  (lambda (thekey)
 	    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
 	      (bibtex-completion-edit-notes
 	       (list (car (org-ref-get-bibtex-key-and-file thekey)))))))
-    (setq reftex-default-bibliography '((concat seb/braindump-folder "references.bib")))
+    (setq reftex-default-bibliography '(references-file))
     (setq bibtex-completion-notes-path seb/braindump-folder 
-	  bibtex-completion-bibliography '((concat seb/braindump-folder "references.bib"))
-	  bibtex-completion-library-path (concat seb/braindump-folder "bibtex-pdfs/"))
+	  bibtex-completion-bibliography references-file
+	  bibtex-completion-library-path (concat seb/braindump-folder "/bibtex-pdfs/"))
     (setq bibtex-completion-notes-path seb/braindump-folder )
     (require 'org-ref-helm)
     (setq org-ref-completion-library 'org-ref-helm-bibtex)

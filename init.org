@@ -149,10 +149,10 @@ To test if the icons work, you can run =(all-the-icons-insert-icons-for 'allthei
 
 #+BEGIN_SRC emacs-lisp
 ;; First of all, load some local variables
-(load-file "./local-vars.el")
+(load-file "~/.emacs.d/local-vars.el")
 
 ;; Without this, my emacs version doesn't work, will probably break somithing
-(defconst debian-emacs-flavor 'emacs27
+(defconst debian-emacs-flavor 'emacs29
    "A symbol representing the particular debian flavor of emacs running.
  Something like 'emacs20, 'xemacs20, etc.")
 
@@ -290,7 +290,7 @@ Remove useless clutter
 #+BEGIN_SRC emacs-lisp
 (tool-bar-mode -1)
 (menu-bar-mode -1)
-(toggle-scroll-bar -1) 
+(toggle-scroll-bar -1)
 (setq inhibit-startup-screen t)
 (setq ring-bell-function 'ignore)
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -311,7 +311,8 @@ Set theme and welcome message
 (doom-themes-treemacs-config)
 (doom-themes-org-config)
 
-(global-linum-mode 0)
+;(global-linum-mode 0) deprecated, now use
+(global-display-line-numbers-mode 1)
 
 (setq initial-scratch-message ";;; Welcome back, master. Happy hacking.")
 #+END_SRC
@@ -362,12 +363,12 @@ Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less br
 More theming based on NANO emacs
 
 #+BEGIN_SRC emacs-lisp
-  (require 'nano-layout)
-  (require 'nano-faces)
-  (nano-faces)
-  (require 'nano-session)
-  (setq semantic-idle-breadcrumbs-format-tag-list-function #'semantic-idle-breadcrumbs--format-innermost-first)
-  (require 'nano-modeline)
+  ;(require 'nano-layout)
+  ;(require 'nano-faces)
+  ;(nano-faces)
+  ;(require 'nano-session)
+  ;(setq semantic-idle-breadcrumbs-format-tag-list-function #'semantic-idle-breadcrumbs--format-innermost-first)
+  ;(require 'nano-modeline)
 #+END_SRC
 
 *** Modeline configuration
@@ -759,8 +760,7 @@ Windmove doesn't behave well with Org, so we need to use different keybindings. 
   (("<f2> i" . windmove-right)
    ("<f2> n" . windmove-left)
    ("<f2> u" . windmove-up)
-   ("<f2> e" . windmove-down)
-   ))
+   ("<f2> e" . windmove-down)))
 #+END_SRC
 
 *** Save list of recently accessed files
@@ -1273,17 +1273,18 @@ Show git statuses on the gutter
 Use =Projectile= for project management. Start with =C-c p=
 
 #+BEGIN_SRC emacs-lisp
-(use-package projectile
-  :ensure t
-  :delight '(:eval (concat " " (projectile-project-name)))
-  :init
-  (progn
-    (setq projectile-keymap-prefix (kbd "C-c p"))
-    (setq projectile-completion-system 'default)
-    (setq projectile-enable-caching t)
-    (projectile-global-mode))
-  :config
-  (setq projectile-mode-line '(:eval (format "[%s]" (projectile-project-name)))))
+  (use-package projectile
+    :ensure t
+    :delight '(:eval (concat " " (projectile-project-name)))
+    :init
+    (progn
+      (setq projectile-keymap-prefix (kbd "C-c p"))
+      (setq projectile-completion-system 'default)
+      (setq projectile-enable-caching t)
+      (counsel-projectile-mode)
+      (projectile-global-mode))
+    :config
+    (setq projectile-mode-line '(:eval (format "[%s]" (projectile-project-name)))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1327,11 +1328,13 @@ Use =Perspective= for workspaces. A workspace is called a perspective. Commands 
 The important ones are probably s, a, n, and p.
 
 #+BEGIN_SRC emacs-lisp
-(use-package perspective
-  :ensure t
-  :diminish
-  :init
-  (persp-mode))
+  (use-package perspective
+    :ensure t
+    :diminish
+    :custom
+    (persp-mode-prefix-key (kbd "C-x x"))
+    :init
+    (persp-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1706,19 +1709,24 @@ Use Slime for the actual editing.
 Use clojure with Cider.
 
 #+BEGIN_SRC emacs-lisp
-(use-package clojure-mode-extra-font-locking)
-(use-package cider)
-(use-package paredit)
-(use-package clojure-mode
-  :ensure t
-  ;; :require clojure-mode-extra-font-locking cider paredit
-;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
-  :config
-  (progn
-	(add-hook 'clojure-mode-hook 'paredit-mode)
-	(add-hook 'clojure-mode-hook 'subword-mode)
-	;; A little more syntax highlighting
-	(require 'clojure-mode-extra-font-locking)))
+  (use-package clojure-mode-extra-font-locking)
+  (use-package cider)
+  (use-package paredit)
+  (use-package clojure-mode
+    :ensure t
+    ;; :require clojure-mode-extra-font-locking cider paredit
+  ;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
+    :config
+    (progn
+	  (add-hook 'clojure-mode-hook 'paredit-mode)
+	  (add-hook 'clojure-mode-hook 'subword-mode)
+	  ;; A little more syntax highlighting
+	  (require 'clojure-mode-extra-font-locking)))
+  (use-package lsp-mode)
+  (use-package lsp-ui)
+  (add-hook 'clojure-mode-hook 'lsp)
+  (add-hook 'clojurescript-mode-hook 'lsp)
+  (add-hook 'clojurec-mode-hook 'lsp)
 #+END_SRC
 
 Configure Cider
@@ -1908,41 +1916,41 @@ Useful keybindings:
 Setup intero:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package intero
-    :ensure t
-    :hook (haskell-mode . intero-mode)
-    :diminish
-    :config
-    (intero-global-mode 1)
-    (add-hook 'haskell-mode-hook
-              (lambda ()
-                (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
-    ;(add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
-    (setq haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
-    ;(haskell-process-auto-import-loaded-modules t)
-    (haskell-process-log t)
-    ;(haskell-process-suggest-hoogle-imports t)
-    (haskell-process-suggest-remove-import-lines t)
-    (haskell-process-type (quote cabal-repl))
-    (haskell-tags-on-save t))
+  ;; (use-package intero
+  ;;   :ensure t
+  ;;   :hook (haskell-mode . intero-mode)
+  ;;   :diminish
+  ;;   :config
+  ;;   (intero-global-mode 1)
+  ;;   (add-hook 'haskell-mode-hook
+  ;;             (lambda ()
+  ;;               (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
+  ;;   ;(add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
+  ;;   (setq haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
+  ;;   ;(haskell-process-auto-import-loaded-modules t)
+  ;;   (haskell-process-log t)
+  ;;   ;(haskell-process-suggest-hoogle-imports t)
+  ;;   (haskell-process-suggest-remove-import-lines t)
+  ;;   (haskell-process-type (quote cabal-repl))
+  ;;   (haskell-tags-on-save t))
 
-  (use-package hindent
-    :ensure t
-    :hook (haskell-mode . hindent-mode))
+  ;; (use-package hindent
+  ;;   :ensure t
+  ;;   :hook (haskell-mode . hindent-mode))
 #+END_SRC
 
 Company for completion:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package company-ghc
-    :ensure t
-    ;; :require haskell-mode company
-    :after haskell-mode
-    :diminish
-    :init
-    (add-hook 'haskell-mode-hook 'ghc-comp-init)
+  ;; (use-package company-ghc
+  ;;   :ensure t
+  ;;   ;; :require haskell-mode company
+  ;;   :after haskell-mode
+  ;;   :diminish
+  ;;   :init
+  ;;   (add-hook 'haskell-mode-hook 'ghc-comp-init)
 
-    (setq company-ghc-show-info 'oneline))
+  ;;   (setq company-ghc-show-info 'oneline))
 #+END_SRC
 ** Rust
 
@@ -2019,8 +2027,8 @@ Setup racer, flycheck and company:
   (require 'irony)
   (require 'elpy)
   (require 'clojure-mode)
-  (require 'company-ghc)
-  (require 'spaceline)
+  ;;(require 'company-ghc)
+  ;;(require 'spaceline)
   (req-package-finish)
 
   (toggle-scroll-bar -1)

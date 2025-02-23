@@ -14,7 +14,6 @@ This is my attempt at making a literate Emacs config file.
 To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v t=).
 
 * Table of Contents                                                     :TOC_3:
-
 - [[#about-this-file][About this file]]
 - [[#meta][Meta]]
 - [[#external-dependencies][External dependencies]]
@@ -24,17 +23,69 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
   - [[#all-the-icons-fonts][All-the-icons fonts]]
 - [[#general-configuration][General Configuration]]
   - [[#startup][Startup]]
-  - [[#general-configuration][General Configuration]]
+  - [[#general-configuration-1][General Configuration]]
+    - [[#backups][Backups]]
+    - [[#theming][Theming]]
+    - [[#modeline-configuration][Modeline configuration]]
+    - [[#sentences-end-with-a-single-space][Sentences end with a single space]]
+    - [[#change-yes-or-no-to-y-or-n][Change "yes or no" to "y or n"]]
+    - [[#minibuffer-editing---more-space][Minibuffer editing - more space!]]
+    - [[#use-cheat-sheets-to-remember-commands][Use cheat-sheets to remember commands]]
+    - [[#undo-tree-mode---visualize-your-undos-and-branches][Undo tree mode - visualize your undos and branches]]
+    - [[#help---which-key-and-discover-my-major][Help - which-key and discover-my-major]]
+    - [[#helpful---better-emacs-help-buffers][`Helpful` - Better Emacs help buffers]]
+    - [[#killing-text][Killing text]]
+    - [[#ido-mode][Ido mode]]
+    - [[#under-x-killing-and-yanking-uses-the-x-clipboard-rather-than-just-the-primary-selection][Under X, killing and yanking uses the X clipboard rather than just the primary selection]]
+    - [[#smoother-scrolling][Smoother scrolling]]
+    - [[#highlight-matching-parents][Highlight matching parents]]
+    - [[#truncate-lines-by-default][Truncate lines by default]]
+    - [[#highlight-cursor-when-screen-moves][Highlight cursor when screen moves]]
+    - [[#m--bound-to-hippie-expand][`M-/` bound to `hippie-expand`]]
+    - [[#calendar--holidays][Calendar & Holidays]]
   - [[#navigation][Navigation]]
+    - [[#tabs-to-switch-buffers][Tabs to switch buffers]]
+    - [[#pop-to-mark][Pop to mark]]
+    - [[#windmove---switching-between-windows][Windmove - switching between windows]]
+    - [[#save-list-of-recently-accessed-files][Save list of recently accessed files]]
+    - [[#smartscan][Smartscan]]
+    - [[#ibuffer][IBuffer]]
+    - [[#open-line-and-open-line-above-like-in-vim][Open line and open line above like in Vim]]
+    - [[#use-ace-window-to-navigate-windows][Use ace-window to navigate windows]]
+    - [[#highlight-symbol-like-vims-][Highlight symbol like Vim's "*"]]
+    - [[#zap-up-to-char-instead-of-zap-to-char-bound-to-m-z][`zap-up-to-char` instead of `zap-to-char` bound to `M-z`]]
   - [[#org-mode][Org-mode]]
+    - [[#general-configuration-2][General configuration]]
+    - [[#modules][Modules]]
+    - [[#keyboard-shortcuts][Keyboard shortcuts]]
+    - [[#org-capture][Org capture]]
+    - [[#org-agenda][Org Agenda]]
+    - [[#org-ref][Org-ref]]
+    - [[#org-noter][Org-noter]]
+    - [[#org-roam][Org-roam]]
+    - [[#deft][Deft]]
+    - [[#calibre-mode][Calibre-mode]]
 - [[#programming][Programming]]
+    - [[#smartparens][Smartparens]]
+    - [[#company-and-flycheck][Company and Flycheck]]
+    - [[#git][Git]]
+    - [[#projectile][Projectile]]
+    - [[#perspective][Perspective]]
+    - [[#ivy][Ivy]]
+    - [[#treemacs][Treemacs]]
   - [[#c-and-family][C and Family]]
+    - [[#style][Style]]
+    - [[#rtags][RTags]]
+    - [[#irony][Irony]]
+    - [[#convenience][Convenience]]
   - [[#python][Python]]
   - [[#lisp-and-family][Lisp and Family]]
+    - [[#common-lisp][Common Lisp]]
+    - [[#clojure][Clojure]]
   - [[#ocaml][OCaml]]
   - [[#latexes][Latexes]]
   - [[#haskell][Haskell]]
-  - [[#rust][Rust]]
+  - [[#rust-1][Rust]]
 - [[#bookend][Bookend]]
   - [[#resolve-dependency-graph-download-and-install][Resolve dependency graph, download, and install.]]
 
@@ -251,6 +302,7 @@ Setup a splash screen
 #+BEGIN_SRC emacs-lisp
 (use-package dash)
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
+(global-set-key (kbd "C-x C-z") 'nil)
 #+END_SRC
 
 *** Backups
@@ -320,7 +372,7 @@ Set theme and welcome message
 Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less brittle.
 
 #+BEGIN_SRC emacs-lisp
-    (set-frame-font "-CTDB-Fira Code-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1")
+    (set-frame-font "-CTDB-Fira Code-normal-normal-normal-*-12-*-*-*-m-0-iso10646-1")
     (setq default-frame-alist '((font . "Fira Code")))
     (set-face-attribute 'bold nil :family "Fira Code"
 					    :height 110
@@ -567,15 +619,16 @@ People often struggle with the Emacs undo model, where there's really no concept
 This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the changes you've made, undo back to a certain point (or redo), and go down different branches.
 
 #+BEGIN_SRC emacs-lisp :drill:
-(use-package undo-tree
-  :diminish
-  :config
-  (progn
-    (global-undo-tree-mode)
-    (setq undo-tree-visualizer-timestamps t)
-    (setq undo-tree-visualizer-diff t))
-  :bind (("C-z" . undo-tree-undo)
-		 ("C-S-z" . undo-tree-redo)))
+  (use-package undo-tree
+    :diminish
+    :config
+    (progn
+      (global-undo-tree-mode)
+      (setq undo-tree-visualizer-timestamps t)
+      (setq undo-tree-visualizer-diff t)
+      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+    :bind (("C-z" . undo-tree-undo)
+		   ("C-S-z" . undo-tree-redo)))
 #+END_SRC
 
 *** Help - which-key and discover-my-major
@@ -1223,17 +1276,15 @@ Always indent new lines
 Magit is magical for source control
 
 #+BEGIN_SRC emacs-lisp
-(use-package magit
-  :ensure t
-  :init
-  (autoload 'magit-status "magit" nil t)
-  :bind ("C-x g" . magit-status))
+  (use-package magit
+    :ensure t
+    :init
+    (autoload 'magit-status "magit" nil t)
+    :bind ("C-x g" . magit-status))
 
-(use-package magithub
-  :after magit
-  :config
-  (magithub-feature-autoinject t)
-  (setq magithub-clone-default-directory "~/Proggy"))
+  (use-package forge
+    :after magit)
+  (setq auth-sources '("~/.authinfo"))
 #+END_SRC
 
 Show git statuses on the gutter
@@ -1334,6 +1385,9 @@ The important ones are probably s, a, n, and p.
     :diminish
     :custom
     (persp-mode-prefix-key (kbd "C-x x"))
+    :config
+    (setq persp-state-default-file "~/.emacs.d/perspective.cache")
+    (add-hook 'kill-emacs-hook #'persp-state-save)
     :init
     (persp-mode))
 #+END_SRC
@@ -1672,6 +1726,9 @@ Enable =paredit= (structural editing, like slurping and stuff).
 
     (add-hook 'lisp-mode-hook 'enable-paredit-mode)
     (add-hook 'lisp-interation-hook 'enable-paredit-mode)
+  
+    (add-hook 'clojure-mode 'enable-paredit-mode)
+    (add-hook 'clojurescript-mode 'enable-paredit-mode)
 
     (add-hook 'inferior-scheme-mode-hook 'enable-paredit-mode))
 #+END_SRC
@@ -1726,6 +1783,9 @@ Use clojure with Cider.
   (use-package lsp-mode)
   (use-package lsp-ui)
   (add-hook 'clojure-mode-hook 'lsp)
+  (add-hook 'clojure-mode-hook 
+	    (lambda () 
+	      (add-hook 'before-save-hook 'cider-format-buffer nil 'make-it-local)))
   (add-hook 'clojurescript-mode-hook 'lsp)
   (add-hook 'clojurec-mode-hook 'lsp)
 #+END_SRC
@@ -1737,7 +1797,8 @@ Configure Cider
     :ensure t
     :init
     ;; provides minibuffer documentation for the code you're typing into the repl
-    (add-hook 'cider-mode-hook 'cider-turn-on-eldoc-mode)
+    (add-hook 'cider-mode-hook #'eldoc-mode)
+    (add-hook 'clojure-mode-hook #'paredit-mode)
     ;; go right to the REPL buffer when it's finished connecting
     (setq cider-repl-pop-to-buffer-on-connect t)
 
@@ -1764,9 +1825,9 @@ Configure Cider
 
     (eval-after-load 'cider
       '(progn
-         (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
-         (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
-         (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns))))
+	 (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
+	 (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
+	 (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns))))
 #+END_SRC
 
 ** OCaml

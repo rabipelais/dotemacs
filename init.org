@@ -1037,40 +1037,61 @@ Add templates:
 *** Org Agenda
 #+BEGIN_SRC emacs-lisp
   (eval-after-load 'org-mode '(define-key org-mode-map "\C-c]" nil))
+
+  (require 'timelog)
+  (autoload 'timelog-summarize-day               "timelog" nil :interactive)
+  (autoload 'timelog-summarize-today             "timelog" nil :interactive)
+  (autoload 'timelog-summarize-month             "timelog" nil :interactive)
+  (autoload 'timelog-summarize-range             "timelog" nil :interactive)
+  (autoload 'timelog-summarize-each-day-in-range "timelog" nil :interactive)
+  (autoload 'timelog-summarize-project           "timelog" nil :interactive)
+  (autoload 'timelog-summarize-elapsed           "timelog" nil :interactive)
+
+  (define-key ctl-x-map "tld" 'timelog-summarize-day)
+  (define-key ctl-x-map "tlt" 'timelog-summarize-today)
+  (define-key ctl-x-map "tlm" 'timelog-summarize-month)
+  (define-key ctl-x-map "tlr" 'timelog-summarize-range)
+  (define-key ctl-x-map "tlD" 'timelog-summarize-each-day-in-range)
+  (define-key ctl-x-map "tlp" 'timelog-current-project)
+  (define-key ctl-x-map "tle" 'timelog-workday-elapsed)
+  (define-key ctl-x-map "tlf" 'timelog-open-file)
+
+  (setq org-clock-persist 'history)
+  (org-clock-persistence-insinuate)
 #+END_SRC
 
 *** Org-ref
 
 #+BEGIN_SRC emacs-lisp
-  (use-package helm-bibtex)
-  (use-package org-ref
-    :after org
-    :ensure t
-    :hook
-    (after-init . (require 'org-ref))
-    :init
-    (setq references-file (concat seb/braindump-folder "/references.bib"))
-    (setq org-ref-notes-function
-	  (lambda (thekey)
-	    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
-	      (bibtex-completion-edit-notes
-	       (list (car (org-ref-get-bibtex-key-and-file thekey)))))))
-    (setq reftex-default-bibliography '(references-file))
-    (setq bibtex-completion-notes-path seb/braindump-folder 
-	  bibtex-completion-bibliography references-file
-	  bibtex-completion-library-path (concat seb/braindump-folder "/bibtex-pdfs/"))
-    (setq bibtex-completion-notes-path seb/braindump-folder )
-    (require 'org-ref-helm)
-    (setq org-ref-completion-library 'org-ref-helm-bibtex)
-    (setq bibtex-completion-notes-template-multiple-files
-    "#+TITLE: Notes on: ${author-or-editor} (${year}): ${title}\n\n- url :: ${url}\n- key :: cite:${=key=}\n- author :: ${author}\n- tags :: ${tags}")
-    (require 'doi-utils)
-    (require 'org-ref-isbn)
-    (require 'org-ref-pubmed)
-    (require 'org-ref-arxiv)
-    :bind
-    ("C-c n n" . org-ref-open-notes-at-point)
-    ("C-c ]" . org-ref-insert-link))
+  ;; (use-package helm-bibtex)
+  ;; (use-package org-ref
+  ;;   :after org
+  ;;   :ensure t
+  ;;   :hook
+  ;;   (after-init . (require 'org-ref))
+  ;;   :init
+  ;;   (setq references-file (concat seb/braindump-folder "/references.bib"))
+  ;;   (setq org-ref-notes-function
+  ;; 	  (lambda (thekey)
+  ;; 	    (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
+  ;; 	      (bibtex-completion-edit-notes
+  ;; 	       (list (car (org-ref-get-bibtex-key-and-file thekey)))))))
+  ;;   (setq reftex-default-bibliography '(references-file))
+  ;;   (setq bibtex-completion-notes-path seb/braindump-folder 
+  ;; 	  bibtex-completion-bibliography references-file
+  ;; 	  bibtex-completion-library-path (concat seb/braindump-folder "/bibtex-pdfs/"))
+  ;;   (setq bibtex-completion-notes-path seb/braindump-folder )
+  ;;   (require 'org-ref-helm)
+  ;;   (setq org-ref-completion-library 'org-ref-helm-bibtex)
+  ;;   (setq bibtex-completion-notes-template-multiple-files
+  ;;   "#+TITLE: Notes on: ${author-or-editor} (${year}): ${title}\n\n- url :: ${url}\n- key :: cite:${=key=}\n- author :: ${author}\n- tags :: ${tags}")
+  ;;   (require 'doi-utils)
+  ;;   (require 'org-ref-isbn)
+  ;;   (require 'org-ref-pubmed)
+  ;;   (require 'org-ref-arxiv)
+  ;;   :bind
+  ;;   ("C-c n n" . org-ref-open-notes-at-point)
+  ;;   ("C-c ]" . org-ref-insert-link))
 #+END_SRC
 
 *** Org-noter
@@ -1083,32 +1104,32 @@ Add templates:
 Utility for note taking and file organization. Based on the whole *Build a Second Brain* idea.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package org-roam
-	:after org
-	;;:hook 
-	;;(after-init . org-roam-db-autosync-mode)
-	:custom
-	(org-roam-directory seb/braindump-folder)
-	:config
-	(setq org-roam-directory seb/braindump-folder)
-	(setq org-roam-capture-templates
-	  '(("d" "default" plain (function org-roam--capture-get-point)
-	     "%?"
-	     :file-name "%<%Y%m%d%H%M%S>_${slug}"
-	     :head "#+TITLE: ${title}\n"
-	     :unnarrowed t)
-	    ("a" "Web article" plain (function org-roam--capture-get-point)
-	     "%?"
-	     :file-name "%<%Y%m%d%H%M%S>_${slug}"
-	     :head "#+TITLE: ${title}\n\n- url :: \n- author :: \n- source :: [[file:20200218170914_article.org][Article]]\n- tags :: \n\n"
-	     :unnarrowed t)))
-	(org-roam-db-autosync-mode)
-	:bind
-	("C-c n l" . org-roam)
-	("C-c n t" . org-roam-today)
-	("C-c n f" . org-roam-find-file)
-	("C-c n i" . org-roam-insert)
-	("C-c n g" . org-roam-graph-show))
+  ;; (use-package org-roam
+  ;; 	:after org
+  ;; 	;;:hook 
+  ;; 	;;(after-init . org-roam-db-autosync-mode)
+  ;; 	:custom
+  ;; 	(org-roam-directory seb/braindump-folder)
+  ;; 	:config
+  ;; 	(setq org-roam-directory seb/braindump-folder)
+  ;; 	(setq org-roam-capture-templates
+  ;; 	  '(("d" "default" plain (function org-roam--capture-get-point)
+  ;; 	     "%?"
+  ;; 	     :file-name "%<%Y%m%d%H%M%S>_${slug}"
+  ;; 	     :head "#+TITLE: ${title}\n"
+  ;; 	     :unnarrowed t)
+  ;; 	    ("a" "Web article" plain (function org-roam--capture-get-point)
+  ;; 	     "%?"
+  ;; 	     :file-name "%<%Y%m%d%H%M%S>_${slug}"
+  ;; 	     :head "#+TITLE: ${title}\n\n- url :: \n- author :: \n- source :: [[file:20200218170914_article.org][Article]]\n- tags :: \n\n"
+  ;; 	     :unnarrowed t)))
+  ;; 	(org-roam-db-autosync-mode)
+  ;; 	:bind
+  ;; 	("C-c n l" . org-roam)
+  ;; 	("C-c n t" . org-roam-today)
+  ;; 	("C-c n f" . org-roam-find-file)
+  ;; 	("C-c n i" . org-roam-insert)
+  ;; 	("C-c n g" . org-roam-graph-show))
 #+END_SRC
 
 

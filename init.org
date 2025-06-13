@@ -2009,93 +2009,21 @@ Change reftex-var to markdown-pandoc format, so they can be parsed and converted
 
 ** Haskell
 
-Use intero for the editing. TODO: test again between intero, dante, ghc-mod, and such. TODONE: intero has hands down the best support for =stack=, which definitely should be used. I couldn't test =dante= extensively.
-Also automatically run =haskell-mode-stylish-buffer= on save. Intero *requires* =stack= and =ghc-mod= (installed as executables in the PATH).
-
-- Code completion (company-ghc)
-- Look up documentation (hoogle)
-- eldoc support (intero)
-- REPL (ghci)
-- Syntax-checking (flycheck)
-- Code navigation (intero)
-
-Useful keybindings:
-
-
-|             |                                |                          |
-|-------------+--------------------------------+--------------------------|
-| =C-c ! l=   | flycheck-list-errors           | See a list of all errors |
-| =C-c ! n/p= | flycheck-(next/previous)-error | Jump to next/prev error  |
-| =M-.=       | intero-goto-definition         | Go to symbol definition  |
-| =C-c C-t=   | intero-type-at                 | Show type at cursor      |
-| =C-c C-r=   | intero-apply-suggestion        | Apply =GHC= suggestion   |
-|             |                                |                          |
+Switch to using LSP. TODO: Try dante
 
 #+BEGIN_SRC emacs-lisp
-(cheatsheet-add-group 'Haskell
-                      '(:key "C-c ! l" :description "List errors")
-                      '(:key "C-c ! n" :description "Jump to next error")
-
-                      '(:key "M-." :description "Go to symbol definition")
-                      '(:key "C-c C-t" :description "Show type at cursor")
-                      '(:key "C-u C-c C-t" :description "Insert type of thing at cursor")
-                      '(:key "C-c C-i" :description "Show inof of thing at point")
-                      '(:key "C-c C-r" :description "Apply suggestion"))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (use-package w3m)
-  (use-package haskell-mode
-    :mode "\\.hs$"
-    :mode ("\\.ghci$" . ghci-script-mode)
-    :mode ("\\.cabal$" . haskell-cabal-mode)
-    :interpreter (("runghc" . haskell-mode)
-                  ("runhaskell" . haskell-mode))
+  (use-package lsp-mode
+    :ensure t
+    :hook (haskell-mode . lsp)
+    :commands lsp
     :config
-    (load "haskell-mode-autoloads" nil t)
-    (autoload 'switch-to-haskell "inf-haskell" nil t)
-    (add-hook 'haskell-mode-hook 'haskell-auto-insert-module-template))
+     (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
+     (require 'lsp-haskell))
+  (require 'haskell-interactive-mode)
+  (require 'haskell-process)
+  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 #+END_SRC
 
-Setup intero:
-
-#+BEGIN_SRC emacs-lisp
-  ;; (use-package intero
-  ;;   :ensure t
-  ;;   :hook (haskell-mode . intero-mode)
-  ;;   :diminish
-  ;;   :config
-  ;;   (intero-global-mode 1)
-  ;;   (add-hook 'haskell-mode-hook
-  ;;             (lambda ()
-  ;;               (add-hook 'before-save-hook 'haskell-mode-stylish-buffer nil 'make-it-local)))
-  ;;   ;(add-hook 'intero-mode-hook #'(flycheck-mode eldoc-mode))
-  ;;   (setq haskell-process-args-cabal-repl (quote ("--ghc-option=-ferror-spans")))
-  ;;   ;(haskell-process-auto-import-loaded-modules t)
-  ;;   (haskell-process-log t)
-  ;;   ;(haskell-process-suggest-hoogle-imports t)
-  ;;   (haskell-process-suggest-remove-import-lines t)
-  ;;   (haskell-process-type (quote cabal-repl))
-  ;;   (haskell-tags-on-save t))
-
-  ;; (use-package hindent
-  ;;   :ensure t
-  ;;   :hook (haskell-mode . hindent-mode))
-#+END_SRC
-
-Company for completion:
-
-#+BEGIN_SRC emacs-lisp
-  ;; (use-package company-ghc
-  ;;   :ensure t
-  ;;   ;; :require haskell-mode company
-  ;;   :after haskell-mode
-  ;;   :diminish
-  ;;   :init
-  ;;   (add-hook 'haskell-mode-hook 'ghc-comp-init)
-
-  ;;   (setq company-ghc-show-info 'oneline))
-#+END_SRC
 ** Rust
 
 Rust support to Emacs.

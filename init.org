@@ -1306,6 +1306,22 @@ Magit is magical for source control
   (use-package forge
     :after magit)
   (setq auth-sources '("~/.authinfo"))
+
+  (if (locate-library "ediff")
+      (progn
+        (autoload 'ediff-files "ediff")
+        (autoload 'ediff-buffers "ediff")
+
+         (eval-after-load "ediff" '(progn
+                (message "doing ediff customisation")
+                (setq diff-switches               "-u"
+                  ediff-custom-diff-options   "-U3"
+                  ediff-split-window-function 'split-window-horizontally
+                  ediff-window-setup-function 'ediff-setup-windows-plain)
+
+                (add-hook 'ediff-startup-hook 'ediff-toggle-wide-display)
+                (add-hook 'ediff-cleanup-hook 'ediff-toggle-wide-display)
+                (add-hook 'ediff-suspend-hook 'ediff-toggle-wide-display)))))
 #+END_SRC
 
 Show git statuses on the gutter

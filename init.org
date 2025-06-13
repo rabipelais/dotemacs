@@ -1807,24 +1807,42 @@ Use clojure with Cider.
   (use-package clojure-mode-extra-font-locking)
   (use-package cider)
   (use-package paredit)
+
+  (use-package lsp-mode
+    :config
+    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map))
+
+  (use-package lsp-ui)
+  (use-package lsp-treemacs)
+  (add-hook 'clojure-mode-hook 'lsp)
+  (add-hook 'clojure-mode-hook 
+  	  (lambda () 
+  	    (add-hook 'before-save-hook 'lsp-format-buffer nil 'make-it-local)))
+
+  (use-package flycheck-clj-kondo
+    :ensure t)
   (use-package clojure-mode
     :ensure t
     ;; :require clojure-mode-extra-font-locking cider paredit
   ;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
     :config
     (progn
-	  (add-hook 'clojure-mode-hook 'paredit-mode)
-	  (add-hook 'clojure-mode-hook 'subword-mode)
-	  ;; A little more syntax highlighting
-	  (require 'clojure-mode-extra-font-locking)))
-  (use-package lsp-mode)
-  (use-package lsp-ui)
-  (add-hook 'clojure-mode-hook 'lsp)
-  (add-hook 'clojure-mode-hook 
-	    (lambda () 
-	      (add-hook 'before-save-hook 'cider-format-buffer nil 'make-it-local)))
+  	  (add-hook 'clojure-mode-hook 'paredit-mode)
+  	  (add-hook 'clojure-mode-hook 'subword-mode)
+  	  ;; A little more syntax highlighting
+  	  (require 'clojure-mode-extra-font-locking))
+    (require 'flycheck-clj-kondo)
+    (dolist (checker '(clj-kondo-clj clj-kondo-cljs clj-kondo-cljc clj-kondo-edn lsp))
+      (setq flycheck-checkers (cons checker (delq checker flycheck-checkers))))
+
+    (dolist (checkers '((lsp . clj-kondo-clj)))
+      (flycheck-add-next-checker (car checkers) (cons 'error (cdr checkers))))
+
+    (setq clojure-indent-style 'align-arguments
+  	  clojure-align-forms-automatically t
+  	  clojure-toplevel-inside-comment-form t  ;; evaluate expressions in comment as top level
+  	  ))
   (add-hook 'clojurescript-mode-hook 'lsp)
-  (add-hook 'clojurec-mode-hook 'lsp)
 #+END_SRC
 
 Configure Cider
@@ -1845,12 +1863,24 @@ Configure Cider
 
     ;; Where to store the cider history.
     (setq cider-repl-history-file "~/.emacs.d/cider-history")
+    (setq 
+  	  cider-print-fn 'puget                   ; pretty printing with sorted keys / set values
+  	  cider-result-overlay-position 'at-point ; results shown right after expression
+  	  cider-overlays-use-font-lock t
+  	
+  	  ;; LSP features over Cider features
+  	  cider-font-lock-dynamically nil         ; use lsp semantic tokens
+  	  cider-eldoc-display-for-symbol-at-point nil ; use lsp
+  	  cider-use-xref nil                      ; cider xref to find definitions
+  	  )
 
     ;; Wrap when navigating history.
     (setq cider-repl-wrap-history t)
 
     ;; enable paredit in your REPL
     (add-hook 'cider-repl-mode-hook 'paredit-mode)
+
+    (setq cider-clojure-cli-global-options "-M:repl/cider")
 
     (defun cider-refresh ()
       (interactive)
@@ -1862,9 +1892,24 @@ Configure Cider
 
     (eval-after-load 'cider
       '(progn
-	 (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
-	 (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
-	 (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns))))
+  	 (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
+  	 (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
+  	 (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns)))
+    
+
+    (defun cider-namespace-refresh ()
+      (interactive)
+      (cider-interactive-eval
+       "(require 'clojure.tools.namespace.repl)
+      (clojure.tools.namespace.repl/refresh)"))
+    
+    ;; (add-hook 'cider-mode-hook 
+    ;;    '(lambda () (add-hook 'after-save-hook 
+    ;;     '(lambda () 
+    ;;        (if (and (boundp 'cider-mode) cider-mode)
+    ;; 	     (cider-namespace-refresh))))))
+
+    (define-key clojure-mode-map (kbd "C-c C-M-r") 'cider-namespace-refresh))
 #+END_SRC
 
 ** OCaml

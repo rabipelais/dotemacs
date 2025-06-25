@@ -289,11 +289,12 @@ Setup a splash screen
     :init
     (setq dashboard-banner-logo-title "Help, I'm stuck in this computer.")
     (setq dashboard-startup-banner 'logo)
+    (setq dashboard-projects-backend 'projectile)
     (setq dashboard-items '((recents  . 5)
-			  (bookmarks . 5)
-			  (projects . 5)
-			  (agenda . 5)
-			  (registers . 5)))
+  			  (bookmarks . 5)
+  			  (projects . 5)
+  			  (agenda . 5)
+  			  (registers . 5)))
     (dashboard-setup-startup-hook)
     (setq initial-buffer-choice (lambda () (get-buffer-create dashboard-buffer-name))))
 #+END_SRC

@@ -199,28 +199,28 @@ To test if the icons work, you can run =(all-the-icons-insert-icons-for 'allthei
 ** Startup
 
 #+BEGIN_SRC emacs-lisp
-;; First of all, load some local variables
-(load-file "~/.emacs.d/local-vars.el")
+  ;; First of all, load some local variables
+  (load-file "~/.emacs.d/local-vars.el")
+  (setq gc-cons-threshold #x40000000)
+  ;; Without this, my emacs version doesn't work, will probably break somithing
+  (defconst debian-emacs-flavor 'emacs29
+     "A symbol representing the particular debian flavor of emacs running.
+   Something like 'emacs20, 'xemacs20, etc.")
 
-;; Without this, my emacs version doesn't work, will probably break somithing
-(defconst debian-emacs-flavor 'emacs29
-   "A symbol representing the particular debian flavor of emacs running.
- Something like 'emacs20, 'xemacs20, etc.")
+    (require 'package)
 
-  (require 'package)
+    ;; Add melpa
+    (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                        (not (gnutls-available-p))))
+           (proto (if no-ssl "http" "https")))
+      ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+      ;;(add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+      (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+      (when (< emacs-major-version 24)
+        ;; For important compatibility libraries like cl-lib
+        (add-to-list 'package-archives '("gnu" . (concat proto "://elpa.gnu.org/packages/")))))
 
-  ;; Add melpa
-  (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
-                      (not (gnutls-available-p))))
-         (proto (if no-ssl "http" "https")))
-    ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
-    ;;(add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
-    (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
-    (when (< emacs-major-version 24)
-      ;; For important compatibility libraries like cl-lib
-      (add-to-list 'package-archives '("gnu" . (concat proto "://elpa.gnu.org/packages/")))))
-
-  (package-initialize)
+    (package-initialize)
 #+END_SRC
 
 Use =straight= for package, dependency freezing and such. It integrates with =use-package=.
@@ -243,17 +243,18 @@ Use =straight= for package, dependency freezing and such. It integrates with =us
 Install, start up and configure =use-package=, really useful for loading packages lazily
 
 #+BEGIN_SRC emacs-lisp
-;; Install with straight
-(straight-use-package 'use-package)
+  ;; Install with straight
+  (straight-use-package 'use-package)
 
-(setq use-package-always-ensure t)
-(setq use-package-always-defer t)
-(setq use-package-verbose t)
-(setq use-package-always-ensure t)
-(require 'use-package)
-(use-package auto-compile
-  :config (auto-compile-on-load-mode))
-(setq load-prefer-newer t)
+  (setq use-package-compute-statistics t)
+
+  (setq use-package-always-ensure t)
+  (setq use-package-always-defer t)
+  (setq use-package-verbose t)
+  (require 'use-package)
+  (use-package auto-compile
+    :config (auto-compile-on-load-mode))
+  (setq load-prefer-newer t)
 #+END_SRC
 
 Install =delight= and =diminish=
@@ -2109,6 +2110,9 @@ Setup racer, flycheck and company:
 
 ** Resolve dependency graph, download, and install.
 #+BEGIN_SRC emacs-lisp
+  ;; Make gc pauses faster by decreasing the threshold.
+  (setq gc-cons-threshold (* 80 1000 1000))
+
   (require 'git-gutter-fringe+)
   (require 'ivy)
   (require 'company-racer)
@@ -2133,5 +2137,5 @@ Setup racer, flycheck and company:
     (horizontal-scroll-bar-mode -1))
 
   (add-hook 'after-make-frame-functions #'(lambda (frame)
-					    (scroll-bar-mode -1)))
+  					    (scroll-bar-mode -1)))
 #+END_SRC

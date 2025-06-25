@@ -374,12 +374,7 @@ Set theme and welcome message
 Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less brittle.
 
 #+BEGIN_SRC emacs-lisp
-    (set-frame-font "-CTDB-Fira Code-normal-normal-normal-*-12-*-*-*-m-0-iso10646-1")
-    (setq default-frame-alist '((font . "Fira Code")))
-    (set-face-attribute 'bold nil :family "Fira Code"
-					    :height 110
-					    :weight 'bold)
-
+    (set-frame-font "-CTDB-Fira Code-normal-normal-normal-*-12-*-*-*-m-0-iso10646-1" nil t)
 
     ;; Using ligature.el
     (require 'ligature)

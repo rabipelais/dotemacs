@@ -72,7 +72,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#git][Git]]
     - [[#projectile][Projectile]]
     - [[#perspective][Perspective]]
-    - [[#ivy][Ivy]]
+    - [[#vertico--co][Vertico & Co]]
     - [[#treemacs][Treemacs]]
   - [[#c-and-family][C and Family]]
     - [[#style][Style]]
@@ -1297,10 +1297,10 @@ Use =sp-cheat-sheet= for an overview of commands.
  Setup =company= and =flycheck= for code completion.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package company
-    :ensure t
-    :diminish
-    :init (add-hook 'after-init-hook 'global-company-mode))
+  ;; (use-package company
+  ;;   :ensure t
+  ;;   :diminish
+  ;;   :init (add-hook 'after-init-hook 'global-company-mode))
 
   (use-package flycheck
     :ensure t
@@ -1315,13 +1315,13 @@ Use =sp-cheat-sheet= for an overview of commands.
       (setq flycheck-indication-mode 'left-fringe)
       ;; A non-descript, left-pointing arrow
       (fringe-helper-define 'flycheck-fringe-bitmap-double-arrow 'center
-	"...X...."
-	"...XX..."
-	"...XXX.."
-	"...XXXX."
-	"...XXX.."
-	"...XX..."
-	"...X....")))
+  	"...X...."
+  	"...XX..."
+  	"...XXX.."
+  	"...XXXX."
+  	"...XXX.."
+  	"...XX..."
+  	"...X....")))
 #+END_SRC
 
 Always indent new lines
@@ -1408,7 +1408,6 @@ Use =Projectile= for project management. Start with =C-c p=
       (setq projectile-keymap-prefix (kbd "C-c p"))
       (setq projectile-completion-system 'default)
       (setq projectile-enable-caching t)
-      (counsel-projectile-mode)
       (projectile-global-mode))
     :config
     (setq projectile-mode-line '(:eval (format "[%s]" (projectile-project-name)))))
@@ -1480,73 +1479,186 @@ The important ones are probably s, a, n, and p.
                       '(:key "C-x x p" :description "Prev perspective"))
 #+END_SRC
 
-*** Ivy
-
-Use =Ivy= instead of =Helm=. Interesting key-bindings:
-- =C-c g= -- find file in current git repository
-- =C-c j= -- grep in current git respository
-
+*** Vertico & Co
 #+BEGIN_SRC emacs-lisp
-
-  (use-package counsel
-    :ensure t)
-
-  (use-package counsel-projectile
-    :ensure t)
-
-  (use-package counsel-spotify
-    :ensure t)
-   
-  (use-package avy
-    :ensure t)
-
-  (use-package ivy 
+  (use-package vertico
     :ensure t
-    :delight
-    :bind
-    (("C-'" . ivy-avy)
-     ("C-s" . swiper)
-     ("M-x" . counsel-M-x)
-     ("C-x C-f" . counsel-find-file)
-     ("C-c g" . counsel-git)
-     ("C-c j" . counsel-git-grep)
-     ("C-c k" . counsel-ag)
-     ("C-x l" . counsel-locate)
-     ("C-x b" . persp-counsel-switch-buffer)
-     ("C-x k" . persp-kill-buffer*))
+    :init
+    (vertico-mode)
     :config
-    (ivy-mode 1)
-    ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
-    (setq ivy-use-virtual-buffers t)
-    ;; number of result lines to display
-    (setq ivy-height 15)
-    ;; does not count candidates
-    (setq ivy-count-format "")
-    ;; no regexp by default
-    (setq ivy-initial-inputs-alist nil)
-    ;; configure regexp engine.
-    (setq ivy-re-builders-alist
-  	;; allow input not in order
-          '((t   . ivy--regex-ignore-order)))
-    (setq magit-completing-read-function 'ivy-completing-read)
-    (counsel-projectile-mode))
+    ;; Grow and shrink the Vertico minibuffer
+    (setq vertico-resize t)
+    ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
+    (setq vertico-cycle t))
 
-  ;; Enable rich annotations using the Marginalia package
-  ;; (use-package marginalia
-  ;;   :ensure t
-  ;;   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
-  ;;   ;; available in the *Completions* buffer, add it to the
-  ;;   ;; `completion-list-mode-map'.
-  ;;   :bind (:map minibuffer-local-map
-  ;;          ("M-A" . marginalia-cycle))
+  ;; Convenient path selection
+  (use-package vertico-directory
+    :after vertico
+    :ensure nil  ;; no need to install, it comes with vertico
+    :bind (:map vertico-map
+      ("DEL" . vertico-directory-delete-char)))
 
-  ;;   ;; The :init section is always executed.
-  ;;   :init
+  ;;; Marginalia
+  (use-package marginalia
+    :ensure t
+    ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+    ;; available in the *Completions* buffer, add it to the
+    ;; `completion-list-mode-map'.
+    :bind (:map minibuffer-local-map
+    	      ("M-A" . marginalia-cycle))
+    :init
+    ;; Marginalia must be activated in the :init section of use-package such that
+    ;; the mode gets enabled right away. Note that this forces loading the
+    ;; package.
+    (marginalia-mode))
 
-  ;;   ;; Marginalia must be activated in the :init section of use-package such that
-  ;;   ;; the mode gets enabled right away. Note that this forces loading the
-  ;;   ;; package.
-  ;;   (marginalia-mode))
+  ;;; Orderless
+  (use-package orderless
+    :ensure t
+    :init
+    (setq completion-styles '(orderless partial-completion basic)
+    	completion-category-defaults nil
+    	completion-category-overrides nil))
+
+  (use-package corfu
+    :ensure t
+    ;; Optional customizations
+    ;; :custom
+    ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+    ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+    ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+    ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+    ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+    ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+
+    ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
+    ;; :hook ((prog-mode . corfu-mode)
+    ;;        (shell-mode . corfu-mode)
+    ;;        (eshell-mode . corfu-mode))
+
+    :init
+
+    ;; Recommended: Enable Corfu globally.  Recommended since many modes provide
+    ;; Capfs and Dabbrev can be used globally (M-/).  See also the customization
+    ;; variable `global-corfu-modes' to exclude certain modes.
+    (global-corfu-mode)
+
+    :config
+    ;; Enable auto completion and configure quitting
+    (setq corfu-auto t
+  	corfu-quit-no-match 'separator
+  	corfu-auto-delay  0.2  ;; TOO SMALL - NOT RECOMMENDED!
+  	corfu-auto-prefix 3))
+    
+
+  ;; Example configuration for Consult
+  (unbind-key "M-c")
+  (use-package consult
+    :ensure t
+    ;; Replace bindings. Lazily loaded by `use-package'.
+    :bind (
+           ([remap Info-search] . consult-info)
+           ;; C-x bindings in `ctl-x-map'
+           ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+           ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+           ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+           ;;("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+           ;; Custom M-# bindings for fast register access
+           ("M-#" . consult-register-load)
+           ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+           ("C-M-#" . consult-register)
+           ;; Other custom bindings
+           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+           ;; M-g bindings in `goto-map'
+           ("M-g e" . consult-compile-error)
+           ("M-g f" . consult-flycheck)               ;; Alternative: consult-flycheck
+           ("M-g g" . consult-goto-line)             ;; orig. goto-line
+           ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+           ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+           ("M-g m" . consult-mark)
+           ("M-g k" . consult-global-mark)
+           ("M-g i" . consult-imenu)
+           ("M-g I" . consult-imenu-multi)
+
+  	 ("C-s" . consult-line)
+           ;; M-c bindings in `search-map'
+           ("M-c d" . consult-find)                  ;; Alternative: consult-fd
+           ("M-c c" . consult-locate)
+           ("M-c g" . consult-grep)
+           ("M-c G" . consult-git-grep)
+           ("M-c r" . consult-ripgrep)
+           ("M-c l" . consult-line)
+           ("M-c L" . consult-line-multi)
+           ("M-c k" . consult-keep-lines)
+           ("M-c u" . consult-focus-lines)
+           ;; Isearch integration
+           ("M-s e" . consult-isearch-history)
+           :map isearch-mode-map
+           ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+           ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+           ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+           ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+           ;; Minibuffer history
+           :map minibuffer-local-map
+           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+           ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+    ;; Enable automatic preview at point in the *Completions* buffer. This is
+    ;; relevant when you use the default completion UI.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
+
+    ;; The :init configuration is always executed (Not lazy)
+    :init
+
+    ;; Tweak the register preview for `consult-register-load',
+    ;; `consult-register-store' and the built-in commands.  This improves the
+    ;; register formatting, adds thin separator lines, register sorting and hides
+    ;; the window mode line.
+    (advice-add #'register-preview :override #'consult-register-window)
+    (setq register-preview-delay 0.5)
+
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+          xref-show-definitions-function #'consult-xref)
+    
+    (autoload 'projectile-project-root "projectile")
+    (setq consult-project-function (lambda (_) (projectile-project-root)))
+
+    ;; Configure other variables and modes in the :config section,
+    ;; after lazily loading the package.
+    :config
+
+    ;; Optionally configure preview. The default value
+    ;; is 'any, such that any key triggers the preview.
+    ;; (setq consult-preview-key 'any)
+    ;; (setq consult-preview-key "M-.")
+    ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+    ;; For some commands and buffer sources it is useful to configure the
+    ;; :preview-key on a per-command basis using the `consult-customize' macro.
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep consult-man
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-file-register
+     consult--source-recent-file consult--source-project-recent-file
+     ;; :preview-key "M-."
+     :preview-key '(:debounce 0.4 any))
+
+    ;; Optionally configure the narrowing key.
+    ;; Both < and C-+ work reasonably well.
+    (setq consult-narrow-key "<"))
+
+  (use-package embark
+    :ensure t
+    :bind
+    (("C-."   . embark-act)         ;; Begin the embark process
+     ("C-;"   . embark-dwim)        ;; good alternative: M-.
+     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+    :config
+    (use-package embark-consult))
 #+END_SRC
 
 *** Treemacs
@@ -1866,8 +1978,16 @@ Use clojure with Cider.
   (use-package paredit)
 
   (use-package lsp-mode
+    :custom
+    (lsp-completion-provider :none) ;; we use Corfu!
     :config
-    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map))
+    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
+    :init
+    (defun my/lsp-mode-setup-completion ()
+      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+            '(flex))) ;; Configure flex
+    :hook
+    (lsp-completion-mode . my/lsp-mode-setup-completion))
 
   (use-package lsp-ui)
   (use-package lsp-treemacs)
@@ -1884,21 +2004,32 @@ Use clojure with Cider.
   ;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
     :config
     (progn
+      (setq cider-eldoc-display-for-symbol-at-point nil)
   	  (add-hook 'clojure-mode-hook 'paredit-mode)
   	  (add-hook 'clojure-mode-hook 'subword-mode)
   	  ;; A little more syntax highlighting
   	  (require 'clojure-mode-extra-font-locking))
     (require 'flycheck-clj-kondo)
-    (dolist (checker '(clj-kondo-clj clj-kondo-cljs clj-kondo-cljc clj-kondo-edn lsp))
-      (setq flycheck-checkers (cons checker (delq checker flycheck-checkers))))
+    
+    
+    ;; (dolist (checker '(clj-kondo-clj clj-kondo-cljs clj-kondo-cljc clj-kondo-edn lsp))
+    ;;   (setq flycheck-checkers (cons checker (delq checker flycheck-checkers))))
 
-    (dolist (checkers '((lsp . clj-kondo-clj)))
-      (flycheck-add-next-checker (car checkers) (cons 'error (cdr checkers))))
+    
+    ;; (dolist (checkers '((lsp . clj-kondo-clj)))
+    ;;   (flycheck-add-next-checker (car checkers) (cons 'error (cdr checkers))))
 
     (setq clojure-indent-style 'align-arguments
   	  clojure-align-forms-automatically t
   	  clojure-toplevel-inside-comment-form t  ;; evaluate expressions in comment as top level
-  	  ))
+  	  )
+    
+    (eval-after-load 'cider
+        '(progn
+    	 (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
+    	 (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
+    	 (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns))))
+
   (add-hook 'clojurescript-mode-hook 'lsp)
 #+END_SRC
 
@@ -1908,8 +2039,6 @@ Configure Cider
   (use-package cider
     :ensure t
     :init
-    ;; provides minibuffer documentation for the code you're typing into the repl
-    (add-hook 'cider-mode-hook #'eldoc-mode)
     (add-hook 'clojure-mode-hook #'paredit-mode)
     ;; go right to the REPL buffer when it's finished connecting
     (setq cider-repl-pop-to-buffer-on-connect t)
@@ -1946,13 +2075,6 @@ Configure Cider
     (defun cider-user-ns ()
       (interactive)
       (cider-repl-set-ns "user"))
-
-    (eval-after-load 'cider
-      '(progn
-  	 (define-key clojure-mode-map (kbd "C-M-r") 'cider-refresh)
-  	 (define-key clojure-mode-map (kbd "C-c u") 'cider-user-ns)
-  	 (define-key cider-mode-map (kbd "C-c u") 'cider-user-ns)))
-    
 
     (defun cider-namespace-refresh ()
       (interactive)
@@ -2101,44 +2223,44 @@ Rust support to Emacs.
 Setup racer, flycheck and company:
 
 #+BEGIN_SRC emacs-lisp
-(use-package rust-mode)
-(use-package racer
-    :ensure t
-    ;; :require rust-mode
-    :diminish
-    :after rust-mode
-    :hook (rust-mode . racer-mode)
-    :config
-    (setenv "PATH" (concat (getenv "PATH") (substitute-in-file-name ":$HOME/.cargo/bin/")))
-    (add-to-list 'exec-path (substitute-in-file-name "$HOME/.cargo/bin/"))
+  (use-package rust-mode)
+  ;; (use-package racer
+  ;;     :ensure t
+  ;;     ;; :require rust-mode
+  ;;     :diminish
+  ;;     :after rust-mode
+  ;;     :hook (rust-mode . racer-mode)
+  ;;     :config
+  ;;     (setenv "PATH" (concat (getenv "PATH") (substitute-in-file-name ":$HOME/.cargo/bin/")))
+  ;;     (add-to-list 'exec-path (substitute-in-file-name "$HOME/.cargo/bin/"))
 
-    (add-hook 'rust-mode-hook #'eldoc-mode)
+  ;;     (add-hook 'rust-mode-hook #'eldoc-mode)
 
-    (setq racer-cmd (executable-find "racer")
-          racer-rust-src-path (or (getenv "RUST_SRC_PATH")
-                                  (expand-file-name "rust/src/" (substitute-in-file-name "$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/"))))
+  ;;     (setq racer-cmd (executable-find "racer")
+  ;;           racer-rust-src-path (or (getenv "RUST_SRC_PATH")
+  ;;                                   (expand-file-name "rust/src/" (substitute-in-file-name "$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/"))))
 
-    (unless (file-exists-p racer-cmd)
-      (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))
-
-
-(use-package company)
-(use-package company-racer
-    :ensure t
-    ;; :require company
-    :after racer
-    :config
-    (with-eval-after-load 'company
-      (add-to-list 'company-backends 'company-racer)))
+  ;;     (unless (file-exists-p racer-cmd)
+  ;;       (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))
 
 
-(use-package flycheck)
-(use-package flycheck-rust
-    :ensure t
-    ;; :require flycheck
-    :after rust-mode
-    :hook (flycheck-mode . flycheck-rust-setup)
-    :config (add-hook 'rust-mode-hook #'flycheck-mode))
+  ;; (use-package company)
+  ;; (use-package company-racer
+  ;;     :ensure t
+  ;;     ;; :require company
+  ;;     :after racer
+  ;;     :config
+  ;;     (with-eval-after-load 'company
+  ;;       (add-to-list 'company-backends 'company-racer)))
+
+
+  (use-package flycheck)
+  (use-package flycheck-rust
+      :ensure t
+      ;; :require flycheck
+      :after rust-mode
+      :hook (flycheck-mode . flycheck-rust-setup)
+      :config (add-hook 'rust-mode-hook #'flycheck-mode))
 #+END_SRC
 
 

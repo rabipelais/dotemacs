@@ -43,6 +43,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#highlight-cursor-when-screen-moves][Highlight cursor when screen moves]]
     - [[#m--bound-to-hippie-expand][`M-/` bound to `hippie-expand`]]
     - [[#calendar--holidays][Calendar & Holidays]]
+  - [[#web-browser-in-emacs][Web Browser in Emacs]]
   - [[#navigation][Navigation]]
     - [[#tabs-to-switch-buffers][Tabs to switch buffers]]
     - [[#pop-to-mark][Pop to mark]]
@@ -775,6 +776,16 @@ Add German (Bavarian) holidays
 	  (holiday-fixed 11 1 "Allerheiligen")
 	  ;; (holiday-float 11 3 1 "Buss- und Bettag" 16)
 	  (holiday-float 11 0 1 "Totensonntag" 20)))
+#+END_SRC
+
+** Web Browser in Emacs
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/site-lisp/emacs-application-framework/")
+  (require 'eaf)
+  (use-package eaf-browser
+    :bind
+    (:map eaf-mode-map
+  	("M-o" . nil)))
 #+END_SRC
 
 ** Navigation

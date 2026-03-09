@@ -54,6 +54,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#ibuffer][IBuffer]]
     - [[#open-line-and-open-line-above-like-in-vim][Open line and open line above like in Vim]]
     - [[#use-ace-window-to-navigate-windows][Use ace-window to navigate windows]]
+    - [[#frame-transpose-to-manipulate-layout][Frame transpose to manipulate layout]]
     - [[#highlight-symbol-like-vims-][Highlight symbol like Vim's "*"]]
     - [[#zap-up-to-char-instead-of-zap-to-char-bound-to-m-z][`zap-up-to-char` instead of `zap-to-char` bound to `M-z`]]
   - [[#org-mode][Org-mode]]
@@ -960,6 +961,12 @@ Use IBuffer with =C-x C-b= to better organize current buffers
     :config
     ;; For colemak
     (setq aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o)))
+#+END_SRC
+
+*** Frame transpose to manipulate layout
+#+BEGIN_SRC emacs-lisp
+    (use-package transpose-frame
+      :ensure t)
 #+END_SRC
 
 *** Highlight symbol like Vim's "*"

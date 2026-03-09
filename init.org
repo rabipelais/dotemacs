@@ -2250,60 +2250,24 @@ Switch to using LSP. TODO: Try dante
 
 Rust support to Emacs.
 
-- Code completion (=racer=)
-- Syntax checking (=flycheck=)
-- Eldoc support (=go-eldoc=)
-- Snippets
-
-=racer= is required, so make sure it's installed!
-
 #+BEGIN_SRC emacs-lisp
-(use-package rust-mode
-  :ensure t
-  :mode "\\.rs$")
-#+END_SRC
+  (use-package rust-mode
+    :init
+    (setq rust-mode-treesitter-derive t))
 
-Setup racer, flycheck and company:
-
-#+BEGIN_SRC emacs-lisp
-  (use-package rust-mode)
-  ;; (use-package racer
-  ;;     :ensure t
-  ;;     ;; :require rust-mode
-  ;;     :diminish
-  ;;     :after rust-mode
-  ;;     :hook (rust-mode . racer-mode)
-  ;;     :config
-  ;;     (setenv "PATH" (concat (getenv "PATH") (substitute-in-file-name ":$HOME/.cargo/bin/")))
-  ;;     (add-to-list 'exec-path (substitute-in-file-name "$HOME/.cargo/bin/"))
-
-  ;;     (add-hook 'rust-mode-hook #'eldoc-mode)
-
-  ;;     (setq racer-cmd (executable-find "racer")
-  ;;           racer-rust-src-path (or (getenv "RUST_SRC_PATH")
-  ;;                                   (expand-file-name "rust/src/" (substitute-in-file-name "$HOME/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/"))))
-
-  ;;     (unless (file-exists-p racer-cmd)
-  ;;       (warn "rust-mode: racer binary can't be found; auto-completion is disabled")))
-
-
-  ;; (use-package company)
-  ;; (use-package company-racer
-  ;;     :ensure t
-  ;;     ;; :require company
-  ;;     :after racer
-  ;;     :config
-  ;;     (with-eval-after-load 'company
-  ;;       (add-to-list 'company-backends 'company-racer)))
-
-
-  (use-package flycheck)
-  (use-package flycheck-rust
-      :ensure t
-      ;; :require flycheck
-      :after rust-mode
-      :hook (flycheck-mode . flycheck-rust-setup)
-      :config (add-hook 'rust-mode-hook #'flycheck-mode))
+  (use-package rustic
+    :ensure t
+    :after (rust-mode)
+    :config
+    (setq rustic-format-on-save nil)
+    :custom
+    (rustic-cargo-use-last-stored-arguments t)
+    (defun rustic-mode-auto-save-hook ()
+    "Enable auto-saving in rustic-mode buffers."
+    (when buffer-file-name
+      (setq-local compilation-ask-about-save nil)))
+    (add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook)
+    (setq rustic-analyzer-command '("~/.local/bin/rust-analyzer")))
 #+END_SRC
 
 

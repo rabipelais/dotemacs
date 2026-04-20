@@ -246,8 +246,6 @@ Install, start up and configure =use-package=, really useful for loading package
 
 #+BEGIN_SRC emacs-lisp
   ;; Install with straight
-  (straight-use-package 'use-package)
-
   (setq use-package-compute-statistics t)
 
   (setq use-package-always-ensure t)
@@ -366,21 +364,23 @@ Remove useless clutter
 Set theme and welcome message
 
 #+BEGIN_SRC emacs-lisp
-;(use-package zenburn-theme :ensure zenburn-theme)
-;(load-theme 'zenburn t)
+  ;(use-package zenburn-theme :ensure zenburn-theme)
+  ;(load-theme 'zenburn t)
 
-;(use-package moe-theme)
-;(moe-dark)
+  ;(use-package moe-theme)
+  ;(moe-dark)
 
-(use-package doom-themes)
-(load-theme 'doom-one t)
-(doom-themes-treemacs-config)
-(doom-themes-org-config)
+  (use-package doom-themes
+    :functions (doom-themes-treemacs-config doom-themes-org-config)
+    :init
+    (load-theme 'doom-one t)
+    (doom-themes-treemacs-config)
+    (doom-themes-org-config))
 
-;(global-linum-mode 0) deprecated, now use
-(global-display-line-numbers-mode 1)
+  ;(global-linum-mode 0) deprecated, now use
+  (global-display-line-numbers-mode 1)
 
-(setq initial-scratch-message ";;; Welcome back, master. Happy hacking.")
+  (setq initial-scratch-message ";;; Welcome back, master. Happy hacking.")
 #+END_SRC
 
 Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less brittle.
@@ -454,6 +454,7 @@ Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less br
   (use-package spaceline
     ;;;; :require ein all-the-icons spaceline-all-the-icons nyan-mode anzu evil flycheck
     :ensure t
+    :functions (my/spaceline-spacemacs-theme)
     :demand
     :init
     (setq nyan-wavy-trail t)
@@ -493,69 +494,69 @@ Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less br
       "My version control information with git icons."
       (powerline-raw
        (when (and vc-mode buffer-file-name)
-	 (let* ((backend (vc-backend buffer-file-name))
-		(state   (vc-state buffer-file-name backend)))
-	   (let ((face    'mode-line-inactive)
-		 (all-the-icons-default-adjust -0.1))
-	     (concat "  "
-		     (cond ((memq state '(edited added))
-			    (setq face 'doom-modeline-info)
-			    (all-the-icons-octicon
-			     "git-compare"
-			     :face face
-			     :v-adjust -0.05))
-			   ((eq state 'needs-merge)
-			    (setq face 'doom-modeline-info)
-			    (all-the-icons-octicon "git-merge" :face face))
-			   ((eq state 'needs-update)
-			    (setq face 'doom-modeline-warning)
-			    (all-the-icons-octicon "arrow-down" :face face))
-			   ((memq state '(removed conflict unregistered))
-			    (setq face 'doom-modeline-urgent)
-			    (all-the-icons-octicon "alert" :face face))
-			   (t
-			    (setq face 'font-lock-doc-face)
-			    (all-the-icons-octicon
-			     "git-compare"
-			     :face face
-			     :v-adjust -0.05)))
-		     " "
+  	 (let* ((backend (vc-backend buffer-file-name))
+  		(state   (vc-state buffer-file-name backend)))
+  	   (let ((face    'mode-line-inactive)
+  		 (all-the-icons-default-adjust -0.1))
+  	     (concat "  "
+  		     (cond ((memq state '(edited added))
+  			    (setq face 'doom-modeline-info)
+  			    (all-the-icons-octicon
+  			     "git-compare"
+  			     :face face
+  			     :v-adjust -0.05))
+  			   ((eq state 'needs-merge)
+  			    (setq face 'doom-modeline-info)
+  			    (all-the-icons-octicon "git-merge" :face face))
+  			   ((eq state 'needs-update)
+  			    (setq face 'doom-modeline-warning)
+  			    (all-the-icons-octicon "arrow-down" :face face))
+  			   ((memq state '(removed conflict unregistered))
+  			    (setq face 'doom-modeline-urgent)
+  			    (all-the-icons-octicon "alert" :face face))
+  			   (t
+  			    (setq face 'font-lock-doc-face)
+  			    (all-the-icons-octicon
+  			     "git-compare"
+  			     :face face
+  			     :v-adjust -0.05)))
+  		     " "
                      (propertize (substring vc-mode (+ (if (eq backend 'Hg) 2 3) 2))
                      'face (if active face))
-		     " "))))))
+  		     " "))))))
 
     (defun my/spaceline--theme (left second-left &rest additional-segments)
       "Convenience function for the spacemacs and emacs themes."
       (spaceline-compile
-	`(,left
-	  (anzu :prioritpy 4)
-	  auto-compile
-	  ,second-left
-	  major-mode
-	  (process :when active)
-	  ((flycheck-error flycheck-warning flycheck-info)
-	   :when active
-	   :priority 10)
-	  ;;(minor-modes :when active)
-	  (mu4e-alert-segment :when active)
-	  (erc-track :when active)
-	  (my/vc-line :when active
-	  :priority 10)
-	  (org-pomodoro :when active)
-	  (org-clock :when active)
-	  (nyan-cat :priority -1))
-	`(which-function
-	  (python-pyvenv :fallback python-pyenv)
-	  purpose
-	  (battery :when active)
-	  (selection-info :priority 2)
-	  input-method
-	  ((point-position
-	    line-column)
-	   :priority 8)
-	  (global :when active)
-	  ,@additional-segments
-	  (hud :priority 8)))
+  	`(,left
+  	  (anzu :prioritpy 4)
+  	  auto-compile
+  	  ,second-left
+  	  major-mode
+  	  (process :when active)
+  	  ((flycheck-error flycheck-warning flycheck-info)
+  	   :when active
+  	   :priority 10)
+  	  ;;(minor-modes :when active)
+  	  (mu4e-alert-segment :when active)
+  	  (erc-track :when active)
+  	  (my/vc-line :when active
+  	  :priority 10)
+  	  (org-pomodoro :when active)
+  	  (org-clock :when active)
+  	  (nyan-cat :priority -1))
+  	`(which-function
+  	  (python-pyvenv :fallback python-pyenv)
+  	  purpose
+  	  (battery :when active)
+  	  (selection-info :priority 2)
+  	  input-method
+  	  ((point-position
+  	    line-column)
+  	   :priority 8)
+  	  (global :when active)
+  	  ,@additional-segments
+  	  (hud :priority 8)))
 
       (setq-default mode-line-format '("%e" (:eval (spaceline-ml-main)))))
 
@@ -564,15 +565,15 @@ Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less br
   ADDITIONAL-SEGMENTS are inserted on the right, between `global' and
   `buffer-position'."
       (apply 'my/spaceline--theme
-	     '((persp-name
-		workspace-number
-		window-number)
-	       :fallback evil-state
-	       :face highlight-face
-	       :priority -1)
-	     '((buffer-modified buffer-id remote-host)
-	       :priority 8)
-	     additional-segments))
+  	     '((persp-name
+  		workspace-number
+  		window-number)
+  	       :fallback evil-state
+  	       :face highlight-face
+  	       :priority -1)
+  	     '((buffer-modified buffer-id remote-host)
+  	       :priority 8)
+  	     additional-segments))
     (my/spaceline-spacemacs-theme)
     (which-function-mode))
 #+END_SRC
@@ -606,7 +607,7 @@ contents of the minibuffer before submitting it.
 (use-package miniedit
   :ensure t
   :commands minibuffer-edit
-  :init (miniedit-install))
+  :hook (after-init . miniedit-install))
 #+END_SRC
 
 *** Use cheat-sheets to remember commands
@@ -622,12 +623,13 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
 #+BEGIN_SRC emacs-lisp
   (use-package undo-tree
     :diminish
+    :functions global-undo-tree-mode
     :config
-    (progn
-      (global-undo-tree-mode)
-      (setq undo-tree-visualizer-timestamps t)
-      (setq undo-tree-visualizer-diff t)
-      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+    (global-undo-tree-mode)
+    :custom
+    (undo-tree-visualizer-timestamps t)
+    (undo-tree-visualizer-diff t)
+    (undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
     :bind (("C-z" . undo-tree-undo)
   	 ("C-S-z" . undo-tree-redo)))
 #+END_SRC
@@ -639,8 +641,7 @@ It's hard to remember keyboard shortcuts. The =which-key= package pops up help a
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
     :ensure t
-    :init
-    (which-key-mode))
+    :hook (after-init . which-key-mode))
 #+END_SRC
 
 Use this to see the key bindings in a mode
@@ -697,7 +698,7 @@ region, operate on a single line. Otherwise, operate on region.
         (list (line-beginning-position)
           (line-beginning-position 2)))))
 
-  (advice-add 'seb/kill-region :before #'slick-cut)
+  (advice-add 'seb/kill-region :before #'seb/kill-region)
 #+END_SRC
 
 *** Under X, killing and yanking uses the X clipboard rather than just the primary selection
@@ -733,8 +734,7 @@ region, operate on a single line. Otherwise, operate on region.
   (use-package beacon
     :ensure t
     :delight
-    :init
-    (beacon-mode 1))
+    :hook (after-init . beacon-mode))
 #+END_SRC
 
 *** `M-/` bound to `hippie-expand`
@@ -813,43 +813,52 @@ Handy way of getting back to previous places.
 #+BEGIN_SRC emacs-lisp
   (use-package dirvish
     :ensure t
+    :functions (dirvish-override-dired-mode dirvish-peek-mode)
+    :defines dirvish-mode-map
     :init
     (dirvish-override-dired-mode)
+    :custom
+    (dired-listing-switches "-l --almost-all --human-readable --group-directories-first --no-group")
+    (dirvish-mode-line-format
+     '(:left (sort symlink) :right (omit yank index)))
+    (dirvish-attributes           ; The order *MATTERS* for some attributes
+     '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
+     dirvish-side-attributes
+     '(vc-state nerd-icons collapse file-size))
+    ;; open large directory (over 20000 files) asynchronously with `fd' command
+    (dirvish-large-directory-threshold 20000)
     :config
-    (setq dired-listing-switches
-          "-l --almost-all --human-readable --group-directories-first --no-group")
     ;; this command is useful when you want to close the window of `dirvish-side'
     ;; automatically when opening a file
     (put 'dired-find-alternate-file 'disabled nil)
     (dirvish-peek-mode)             ; Preview files in minibuffer
     ;; (dirvish-side-follow-mode)      ; similar to `treemacs-follow-mode'
-    (setq dirvish-mode-line-format
-          '(:left (sort symlink) :right (omit yank index)))
-    (setq dirvish-attributes           ; The order *MATTERS* for some attributes
-  	'(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
-  	dirvish-side-attributes
-  	'(vc-state nerd-icons collapse file-size))
-    ;; open large directory (over 20000 files) asynchronously with `fd' command
-    (setq dirvish-large-directory-threshold 20000)
     :bind ; Bind `dirvish-fd|dirvish-side|dirvish-dwim' as you see fit
     (:map dirvish-mode-map               ; Dirvish inherits `dired-mode-map'
-     (";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
-     ("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
-     ("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
-     ("f"   . dirvish-file-info-menu)    ; [f]ile info
-     ("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
-     ("s"   . dirvish-quicksort)         ; [s]ort flie list
-     ("r"   . dirvish-history-jump)      ; [r]ecent visited
-     ("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
-     ("v"   . dirvish-vc-menu)           ; [v]ersion control commands
-     ("*"   . dirvish-mark-menu)
-     ("y"   . dirvish-yank-menu)
-     ("N"   . dirvish-narrow)
-     ("^"   . dirvish-history-last)
-     ("TAB" . dirvish-subtree-toggle)
-     ("M-f" . dirvish-history-go-forward)
-     ("M-b" . dirvish-history-go-backward)
-     ("M-e" . dirvish-emerge-menu)))
+  	(";"   . dired-up-directory)        ; So you can adjust `dired' bindings here
+  	("?"   . dirvish-dispatch)          ; [?] a helpful cheatsheet
+  	("a"   . dirvish-setup-menu)        ; [a]ttributes settings:`t' toggles mtime, `f' toggles fullframe, etc.
+  	("f"   . dirvish-file-info-menu)    ; [f]ile info
+  	("o"   . dirvish-quick-access)      ; [o]pen `dirvish-quick-access-entries'
+  	("s"   . dirvish-quicksort)         ; [s]ort file list
+  	("r"   . dirvish-history-jump)      ; [r]ecent visited
+  	("l"   . dirvish-ls-switches-menu)  ; [l]s command flags
+  	("v"   . dirvish-vc-menu)           ; [v]ersion control commands
+  	("*"   . dirvish-mark-menu)
+  	("y"   . dirvish-yank-menu)
+  	("N"   . dirvish-narrow)
+  	("^"   . dirvish-history-last)
+  	("TAB" . dirvish-subtree-toggle)
+  	("M-f" . dirvish-history-go-forward)
+  	("M-b" . dirvish-history-go-backward)
+  	("M-e" . dirvish-emerge-menu)))
+
+  (with-eval-after-load 'dired
+    (require 'dired-x)
+    ;; Set dired-x global variables here.  For example:
+    ;; (setq dired-x-hands-off-my-keys nil)
+    (setq dired-omit-files
+          (concat dired-omit-files "\\|^\\..*$")))
 #+END_SRC
 
 *** Windmove - switching between windows
@@ -869,14 +878,16 @@ Windmove doesn't behave well with Org, so we need to use different keybindings. 
 *** Save list of recently accessed files
 
 #+BEGIN_SRC emacs-lisp
-(use-package recentf
-  :ensure t
-  :init
-  (recentf-mode 1)
-  (setq delete-old-versions t)
-  (setq recentf-max-menu-items 30)
-  (run-at-time nil (* 5 60) 'recentf-save-list)
-  :bind (("C-x C-r" . recentf-open-files)))
+  (use-package recentf
+    :ensure t
+    :commands recentf-open-files
+    :custom
+    (delete-old-versions t)
+    (recentf-max-menu-items 30)
+    :init
+    (recentf-mode 1)
+    (run-at-time nil (* 5 60) 'recentf-save-list)
+    :bind (("C-x C-r" . recentf-open-files)))
 #+END_SRC
 
 *** Smartscan
@@ -892,37 +903,36 @@ From https://github.com/itsjeyd/emacs-config/blob/emacs24/init.el, this makes =M
 *** IBuffer
 Use IBuffer with =C-x C-b= to better organize current buffers
 #+BEGIN_SRC emacs-lisp
-(use-package ibuffer
-  :ensure t
-  :config
-  (progn
-	(setq ibuffer-saved-filter-groups
-		  (quote (("default"
-				   ("emacs" (or
-							 (name . "^\\*scratch\\*$")
-							 (name . "^\\*Messages\\*$")))
-				   ("Org" ;; all org-related buffers
-					(mode . org-mode))
-				   ("Mail"
-					(or  ;; mail-related buffers
-					 (mode . message-mode)
-					 (mode . mail-mode)
-					 ;; etc.; all your mail related modes
-					 ))
-				   ("Programming" ;; prog stuff not already in MyProjectX
-					(or
-					 (mode . c-mode)
-					 (mode . perl-mode)
-					 (mode . python-mode)
-					 (mode . emacs-lisp-mode)
-					 (mode . haskell-mode)
-					 ;; etc
-					 ))
-				   ("ERC"   (mode . erc-mode))))))
-	(add-hook 'ibuffer-mode-hook
-			  (lambda ()
-				(ibuffer-switch-to-saved-filter-groups "default"))))
-  :bind ("C-x C-b" . ibuffer))
+  (use-package ibuffer
+    :ensure t
+    :custom
+    (ibuffer-saved-filter-groups
+     (quote (("default"
+  	    ("emacs" (or
+  		      (name . "^\\*scratch\\*$")
+  		      (name . "^\\*Messages\\*$")))
+  	    ("Org" ;; all org-related buffers
+  	     (mode . org-mode))
+  	    ("Mail"
+  	     (or  ;; mail-related buffers
+  	      (mode . message-mode)
+  	      (mode . mail-mode)
+  	      ;; etc.; all your mail related modes
+  	      ))
+  	    ("Programming" ;; prog stuff not already in MyProjectX
+  	     (or
+  	      (mode . c-mode)
+  	      (mode . perl-mode)
+  	      (mode . python-mode)
+  	      (mode . emacs-lisp-mode)
+  	      (mode . haskell-mode)
+  	      ;; etc
+  	      ))
+  	    ("ERC"   (mode . erc-mode))))))
+    :hook
+    (ibuffer-mode . (lambda ()
+  		    (ibuffer-switch-to-saved-filter-groups "default")))
+    :bind ("C-x C-b" . ibuffer))
 #+END_SRC
 
 *** Open line and open line above like in Vim
@@ -954,27 +964,29 @@ Use IBuffer with =C-x C-b= to better organize current buffers
 #+BEGIN_SRC emacs-lisp
   (use-package ace-window
     :ensure t
+    :commands ace-window
     :bind
-    ("M-o" . 'ace-window)
-    :config
+    ("M-o" . ace-window)
+    :custom
     ;; For colemak
-    (setq aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o)))
+    (aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o)))
 #+END_SRC
 
 *** Frame transpose to manipulate layout
 #+BEGIN_SRC emacs-lisp
-    (use-package transpose-frame
-      :ensure t)
+  (use-package transpose-frame
+    :ensure t)
 #+END_SRC
 
 *** Highlight symbol like Vim's "*"
 
 #+BEGIN_SRC emacs-lisp
-(use-package highlight-symbol
-  :ensure t
-  :diminish
-  :bind (("C-*" . highlight-symbol-next)
-	 ("C-x *" . highlight-symbol-prev)))
+  (use-package highlight-symbol
+    :ensure t
+    :commands (highlight-symbol-next highlight-symbol-prev)
+    :diminish
+    :bind (("C-*" . highlight-symbol-next)
+  	 ("C-x *" . highlight-symbol-prev)))
 #+END_SRC
 
 *** `zap-up-to-char` instead of `zap-to-char` bound to `M-z`
@@ -1007,9 +1019,8 @@ Sure /org italic/ characters look kinda like slanted words, but with the added b
 #+BEGIN_SRC emacs-lisp
   (use-package toc-org
       :ensure t
-      :config
-      (progn
-	(add-hook 'org-mode-hook 'toc-org-mode)))
+      :hook
+      (org-mode . toc-org-mode))
 #+END_SRC
 
 
@@ -1018,52 +1029,53 @@ Org has a whole bunch of optional modules. These are the ones I'm
 currently experimenting with.
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-contrib
-	:ensure t)
-(setq org-modules '(ol-bbdb
-		    org-tempo
-		    ol-bibtex
-		    ol-docview
-		    ol-gnus
-		    org-habit
-		    ol-info
-		    org-choose
-		    org-collector
-		    org-learn
-		    ol-man
-		    org-panel
-		    org-screen
-		    org-interactive-query
-		    org-annotate-file
-		    org-eval
-		    org-expiry
-		    org-toc
-		    org-drill
-		    org-jsinfo
-		    ol-irc))
-(eval-after-load 'org
-	     '(org-load-modules-maybe t))
-;; Prepare stuff for org-export-backends
-(setq org-export-backends '(org latex icalendar html ascii))
-(setq org-goto-interface 'outline-path-completion
-	    org-goto-max-level 10)
+  (use-package org-contrib
+    :ensure t
+    :custom
+    (org-modules '(ol-bbdb
+  		 org-tempo
+  		 ol-bibtex
+  		 ol-docview
+  		 ol-gnus
+  		 org-habit
+  		 ol-info
+  		 org-choose
+  		 org-collector
+  		 org-learn
+  		 ol-man
+  		 org-panel
+  		 org-screen
+  		 org-interactive-query
+  		 org-annotate-file
+  		 org-eval
+  		 org-expiry
+  		 org-toc
+  		 org-drill
+  		 org-jsinfo
+  		 ol-irc))
+    ;; Prepare stuff for org-export-backends
+    (org-export-backends '(org latex icalendar html ascii))
+    (org-goto-interface 'outline-path-completion
+  		      org-goto-max-level 10))
+  (eval-after-load 'org
+  	     '(org-load-modules-maybe t))
 #+END_SRC
 
 
 Useful template to insert elisp code blocks:
 
 #+BEGIN_SRC emacs-lisp
-    ;; add <el for emacs-lisp expansion
-;    (eval-after-load 'org
-;      '(add-to-list 'org-structure-template-alist
-;		 '("el" .  "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>")))
-(require 'org-tempo)
+      ;; add <el for emacs-lisp expansion
+  ;    (eval-after-load 'org
+  ;      '(add-to-list 'org-structure-template-alist
+  ;		 '("el" .  "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC" "<src lang=\"emacs-lisp\">\n?\n</src>")))
+  (require 'org-tempo)
   (tempo-define-template "emacs-lisp" ; just some name for the template
-	     '("#+BEGIN_SRC emacs-lisp" n
-	       "#+END_SRC")
-	     "<el"
-	     "Insert an emacs lisp block" ; documentation
-	     'org-tempo-tags)
+  		       '("#+BEGIN_SRC emacs-lisp" n
+  			 "#+END_SRC")
+  		       "<el"
+  		       "Insert an emacs lisp block" ; documentation
+  		       'org-tempo-tags)
 #+END_SRC
 
 *** Keyboard shortcuts
@@ -1110,8 +1122,8 @@ Add templates:
   (define-key ctl-x-map "tle" 'timelog-workday-elapsed)
   (define-key ctl-x-map "tlf" 'timelog-open-file)
 
-  (setq org-clock-persist 'history)
-  (org-clock-persistence-insinuate)
+  ;;(setq org-clock-persist 'history)
+  ;;(org-clock-persistence-insinuate)
 #+END_SRC
 
 *** Org-ref
@@ -1224,21 +1236,19 @@ Some general stuff. Setup outline mode so we can use heading levels for code nav
   (use-package outshine
     :ensure t
     :diminish
-    :init
-    (outshine-mode))
+    :hook (after-init . outshine-mode))
 
   ;; Enables outline-minor-mode for *ALL* programming buffers
   (add-hook 'prog-mode-hook 'outline-minor-mode)
 
   (use-package indent-bars
     :hook ((python-mode yaml-mode clojure-mode edn-mode json-mode) . indent-bars-mode)
-    :config
-      (setq
-       indent-bars-pattern "."
-       indent-bars-width-frac 0.4
-       indent-bars-pad-frac 0.25
-       indent-bars-color-by-depth nil
-       indent-bars-highlight-current-depth '(:face default :blend 0.4)))
+    :custom
+    (indent-bars-pattern ".")
+    (indent-bars-width-frac 0.4)
+    (indent-bars-pad-frac 0.25)
+    (indent-bars-color-by-depth nil)
+    (indent-bars-highlight-current-depth '(:face default :blend 0.4)))
 
   (use-package stripspace
     ;; Enable for prog-mode-hook, text-mode-hook, conf-mode-hook
@@ -1274,63 +1284,61 @@ Use =sp-cheat-sheet= for an overview of commands.
   (use-package smartparens
     :ensure t
     :diminish smartparens-mode
-    :init (smartparens-global-mode t)
+    :hook (after-init . smartparens-global-mode)
     :config
-    (progn
-      (require 'smartparens-config)
-      ;;;;;;;;;;;;;;;;;;;
-      ;; keybinding management
+    (require 'smartparens-config)
+    (sp-local-pair 'c++-mode "{" nil :post-handlers '((my/create-newline-and-enter-sexp "RET")))
+    :bind
+    (:map smartparens-mode-map
+  	("C-c s r n" . 'sp-narrow-to-sexp)
+  	("C-M-f" . 'sp-forward-sexp)
+  	("C-M-b" . 'sp-backward-sexp)
+  	("C-M-d" . 'sp-down-sexp)
+  	("C-M-a" . 'sp-backward-down-sexp)
+  	("C-S-a" . 'sp-beginning-of-sexp)
+  	("C-S-d" . 'sp-end-of-sexp)
 
-      (define-key smartparens-mode-map (kbd "C-c s r n") 'sp-narrow-to-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-f") 'sp-forward-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-b") 'sp-backward-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-d") 'sp-down-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-a") 'sp-backward-down-sexp)
-      (define-key smartparens-mode-map (kbd "C-S-a") 'sp-beginning-of-sexp)
-      (define-key smartparens-mode-map (kbd "C-S-d") 'sp-end-of-sexp)
+  	("C-M-e" . 'sp-up-sexp)
+  	(")" . 'sp-up-sexp)
+  	("C-M-u" . 'sp-backward-up-sexp)
+  	("C-M-t" . 'sp-transpose-sexp)
 
-      (define-key smartparens-mode-map (kbd "C-M-e") 'sp-up-sexp)
-      (define-key emacs-lisp-mode-map (kbd ")") 'sp-up-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-u") 'sp-backward-up-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-t") 'sp-transpose-sexp)
+  	("C-M-n" . 'sp-next-sexp)
+  	("C-M-p" . 'sp-previous-sexp)
 
-      (define-key smartparens-mode-map (kbd "C-M-n") 'sp-next-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-p") 'sp-previous-sexp)
+  	("C-M-k" . 'sp-kill-sexp)
+  	("C-M-w" . 'sp-copy-sexp)
 
-      (define-key smartparens-mode-map (kbd "C-M-k") 'sp-kill-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-w") 'sp-copy-sexp)
+  	("M-<delete>" . 'sp-unwrap-sexp)
+  	("M-<backspace>" . 'sp-backward-unwrap-sexp)
 
-      (define-key smartparens-mode-map (kbd "M-<delete>") 'sp-unwrap-sexp)
-      (define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
+  	("C-<right>" . 'sp-forward-slurp-sexp)
+  	("C-<left>" . 'sp-forward-barf-sexp)
+  	("C-M-<left>" . 'sp-backward-slurp-sexp)
+  	("C-M-<right>" . 'sp-backward-barf-sexp)
 
-      (define-key smartparens-mode-map (kbd "C-<right>") 'sp-forward-slurp-sexp)
-      (define-key smartparens-mode-map (kbd "C-<left>") 'sp-forward-barf-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-<right>") 'sp-backward-barf-sexp)
+  	("M-D" . 'sp-splice-sexp)
+  	("C-M-<delete>" . 'sp-splice-sexp-killing-forward)
+  	("C-M-<backspace>" . 'sp-splice-sexp-killing-backward)
+  	("C-S-<backspace>" . 'sp-splice-sexp-killing-around)
 
-      (define-key smartparens-mode-map (kbd "M-D") 'sp-splice-sexp)
-      (define-key smartparens-mode-map (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
-      (define-key smartparens-mode-map (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
-      (define-key smartparens-mode-map (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
+  	("C-]" . 'sp-select-next-thing-exchange)
+  	("C-<left_bracket>" . 'sp-select-previous-thing)
+  	("C-M-]" . 'sp-select-next-thing)
 
-      (define-key smartparens-mode-map (kbd "C-]") 'sp-select-next-thing-exchange)
-      (define-key smartparens-mode-map (kbd "C-<left_bracket>") 'sp-select-previous-thing)
-      (define-key smartparens-mode-map (kbd "C-M-]") 'sp-select-next-thing)
+  	("M-F" . 'sp-forward-symbol)
+  	("M-B" . 'sp-backward-symbol)
 
-      (define-key smartparens-mode-map (kbd "M-F") 'sp-forward-symbol)
-      (define-key smartparens-mode-map (kbd "M-B") 'sp-backward-symbol)
+  	("C-c s t" . 'sp-prefix-tag-object)
+  	("C-c s p" . 'sp-prefix-pair-object)
+  	("C-c s c" . 'sp-convolute-sexp)
+  	("C-c s a" . 'sp-absorb-sexp)
+  	("C-c s e" . 'sp-emit-sexp)
+  	("C-c s p" . 'sp-add-to-previous-sexp)
+  	("C-c s n" . 'sp-add-to-next-sexp)
+  	("C-c s j" . 'sp-join-sexp)
+  	("C-c s s" . 'sp-split-sexp)))
 
-      (define-key smartparens-mode-map (kbd "C-c s t") 'sp-prefix-tag-object)
-      (define-key smartparens-mode-map (kbd "C-c s p") 'sp-prefix-pair-object)
-      (define-key smartparens-mode-map (kbd "C-c s c") 'sp-convolute-sexp)
-      (define-key smartparens-mode-map (kbd "C-c s a") 'sp-absorb-sexp)
-      (define-key smartparens-mode-map (kbd "C-c s e") 'sp-emit-sexp)
-      (define-key smartparens-mode-map (kbd "C-c s p") 'sp-add-to-previous-sexp)
-      (define-key smartparens-mode-map (kbd "C-c s n") 'sp-add-to-next-sexp)
-      (define-key smartparens-mode-map (kbd "C-c s j") 'sp-join-sexp)
-      (define-key smartparens-mode-map (kbd "C-c s s") 'sp-split-sexp)))
-
-  (sp-local-pair 'c++-mode "{" nil :post-handlers '((my/create-newline-and-enter-sexp "RET")))
   (defun my/create-newline-and-enter-sexp (&rest _ignored)
     "Open a new brace or bracket expression, with relevant newlines and indent. "
     (newline)
@@ -1348,6 +1356,9 @@ Use =sp-cheat-sheet= for an overview of commands.
   ;;   :ensure t
   ;;   :diminish
   ;;   :init (add-hook 'after-init-hook 'global-company-mode))
+
+  (use-package fringe-helper
+    :ensure t)
 
   (use-package flycheck
     :ensure t
@@ -1457,14 +1468,13 @@ Use =Projectile= for project management. Start with =C-c p=
   (use-package projectile
     :ensure t
     :delight '(:eval (concat " " (projectile-project-name)))
-    :init
-    (progn
-      (setq projectile-keymap-prefix (kbd "C-c p"))
-      (setq projectile-completion-system 'default)
-      (setq projectile-enable-caching t)
-      (projectile-global-mode))
-    :config
-    (setq projectile-mode-line '(:eval (format "[%s]" (projectile-project-name)))))
+    :custom
+    (projectile-keymap-prefix (kbd "C-c p"))
+    (projectile-completion-system 'default)
+    (projectile-enable-caching t)
+    (projectile-mode-line '(:eval (format "[%s]" (projectile-project-name))))
+    :hook
+    (after-init . projectile-mode))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1578,6 +1588,7 @@ The important ones are probably s, a, n, and p.
   ;; Corfu is the completion popup
   (use-package corfu
     :ensure t
+    :functions (corfu-history-mode corfu-popupinfo-mode)
     ;; Optional customizations
     :custom
     (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
@@ -1635,6 +1646,7 @@ The important ones are probably s, a, n, and p.
   (unbind-key "M-c")
   (use-package consult
     :ensure t
+    :functions (consult-xref consult-register-window)
     ;; Replace bindings. Lazily loaded by `use-package'.
     :bind (
            ([remap Info-search] . consult-info)
@@ -1663,7 +1675,7 @@ The important ones are probably s, a, n, and p.
            ("M-g i" . consult-imenu)
            ("M-g I" . consult-imenu-multi)
 
-  	 ("C-s" . consult-line)
+  		 ("C-s" . consult-line)
            ;; M-c bindings in `search-map'
            ("M-c d" . consult-find)                  ;; Alternative: consult-fd
            ("M-c c" . consult-locate)
@@ -1692,7 +1704,6 @@ The important ones are probably s, a, n, and p.
 
     ;; The :init configuration is always executed (Not lazy)
     :init
-
     ;; Tweak the register preview for `consult-register-load',
     ;; `consult-register-store' and the built-in commands.  This improves the
     ;; register formatting, adds thin separator lines, register sorting and hides
@@ -1722,8 +1733,8 @@ The important ones are probably s, a, n, and p.
      consult-theme :preview-key '(:debounce 0.2 any)
      consult-ripgrep consult-git-grep consult-grep consult-man
      consult-bookmark consult-recent-file consult-xref
-     consult--source-bookmark consult--source-file-register
-     consult--source-recent-file consult--source-project-recent-file
+     consult-source-bookmark consult-source-file-register
+     consult-source-recent-file consult-source-project-recent-file
      ;; :preview-key "M-."
      :preview-key '(:debounce 0.4 any))
 
@@ -1793,10 +1804,9 @@ Use treemacs constrained to the projectile project.
   (use-package treemacs-projectile
     ;; :require treemacs projectile
     :ensure t
-    :config
-    (setq treemacs-header-function #'treemacs-projectile-create-header)
+    :after (treemacs projectile)
     :bind (:map global-map
-		("C-c tt" . treemacs-projectile)))
+  		("C-c tt" . treemacs-projectile)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1832,7 +1842,6 @@ Set indentation style to the One True Style (Kernighan & Ritchie). Also, indenta
 (setq-default c-default-style "k&r"
 			  tab-width 4
 			  c-basic-offset 4)
-(setq guess-offset-quiet-p t)
 #+END_SRC
 
 Show the name of the function where you're located.
@@ -2036,21 +2045,19 @@ Use Slime for the actual editing.
 
 #+BEGIN_SRC emacs-lisp
 
-(use-package slime
-  :ensure t
-  :config
-  (progn
-    (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
-    (add-hook 'lisp-mode-hook
-	      (lambda ()
-		(set (make-local-variable 'lisp-indent-function)
-		     'common-lisp-indent-function)
-		(sp-pair "`" nil :actions :rem)))
-    (add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
-    (slime-setup)
-    (slime-setup '(slime-fancy slime-asdf slime-banner))
-    (setq slime-complete-symbol*-fancy t)
-    (setq slime-complete-symbol-function 'slime-fuzzy-complete-symbol)))
+  (use-package slime
+    :ensure t
+    :config
+    (progn
+      (add-hook 'lisp-mode-hook (lambda () (slime-mode t)))
+      (add-hook 'lisp-mode-hook
+  	      (lambda ()
+  		(set (make-local-variable 'lisp-indent-function)
+  		     'common-lisp-indent-function)
+  		(sp-pair "`" nil :actions :rem)))
+      ;;(add-hook 'inferior-lisp-mode-hook (lambda () (inferior-slime-mode t)))
+      (slime-setup)
+      (slime-setup '(slime-fancy slime-asdf slime-banner))))
 #+END_SRC
 
 *** Clojure
@@ -2149,7 +2156,7 @@ Configure Cider
     ;; enable paredit in your REPL
     (add-hook 'cider-repl-mode-hook 'paredit-mode)
 
-    (setq cider-clojure-cli-global-options "-M:repl/cider")
+    (setq cider-clojure-cli-global-aliases "repl/cider")
 
     :config
     (defun cider-refresh ()
@@ -2263,9 +2270,9 @@ Change reftex-var to markdown-pandoc format, so they can be parsed and converted
   (use-package markdown-mode
     :ensure t
     :init
-    (eval-after-load 'reftex-vars
-      '(progn
-         (setq reftex-cite-format '((?\C-m . "[@%l]")))))
+    ;;(eval-after-load 'reftex-vars
+    ;;  '(progn
+    ;;     (setq reftex-cite-format '((?\C-m . "[@%l]")))))
     (add-hook 'markdown-mode-hook 'reftex-mode)
     (add-hook 'markdown-mode-hook 'flyspell-mode))
 #+END_SRC
@@ -2343,6 +2350,6 @@ Rust support to Emacs.
   (when (fboundp 'horizontal-scroll-bar-mode)
     (horizontal-scroll-bar-mode -1))
 
-  (add-hook 'after-make-frame-functions #'(lambda (frame)
+  (add-hook 'after-make-frame-functions #'(lambda (_)
   					    (scroll-bar-mode -1)))
 #+END_SRC

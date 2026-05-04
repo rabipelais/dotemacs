@@ -33,7 +33,6 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#undo-tree-mode---visualize-your-undos-and-branches][Undo tree mode - visualize your undos and branches]]
     - [[#help---which-key-and-discover-my-major][Help - which-key and discover-my-major]]
     - [[#helpful---better-emacs-help-buffers][`Helpful` - Better Emacs help buffers]]
-    - [[#killing-text][Killing text]]
     - [[#under-x-killing-and-yanking-uses-the-x-clipboard-rather-than-just-the-primary-selection][Under X, killing and yanking uses the X clipboard rather than just the primary selection]]
     - [[#smoother-scrolling][Smoother scrolling]]
     - [[#highlight-matching-parents][Highlight matching parents]]
@@ -87,8 +86,6 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
   - [[#latexes][Latexes]]
   - [[#haskell][Haskell]]
   - [[#rust-1][Rust]]
-- [[#bookend][Bookend]]
-  - [[#resolve-dependency-graph-download-and-install][Resolve dependency graph, download, and install.]]
 
 * Meta
 
@@ -203,7 +200,6 @@ To test if the icons work, you can run =(all-the-icons-insert-icons-for 'allthei
   (setq load-prefer-newer t)
   ;; First of all, load some local variables
   (load-file "~/.emacs.d/local-vars.el")
-  (setq gc-cons-threshold #x40000000)
   ;; Without this, my emacs version doesn't work, will probably break somithing
   (defconst debian-emacs-flavor 'emacs30
      "A symbol representing the particular debian flavor of emacs running.
@@ -225,36 +221,15 @@ To test if the icons work, you can run =(all-the-icons-insert-icons-for 'allthei
     (package-initialize)
 #+END_SRC
 
-Use =straight= for package, dependency freezing and such. It integrates with =use-package=.
-
-#+BEGIN_SRC emacs-lisp
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-	(bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-	  (url-retrieve-synchronously
-	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-	   'silent 'inhibit-cookies)
-	(goto-char (point-max))
-	(eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
-#+END_SRC
-
 Install, start up and configure =use-package=, really useful for loading packages lazily
 
 #+BEGIN_SRC emacs-lisp
-  ;; Install with straight
-  (setq use-package-compute-statistics t)
+  ;; (setq use-package-compute-statistics t)
 
   (setq use-package-always-ensure t)
   (setq use-package-always-defer t)
   (setq use-package-verbose t)
   (require 'use-package)
-  (use-package auto-compile
-    :config (auto-compile-on-load-mode))
-  (setq load-prefer-newer t)
 
   (use-package compile-angel
     :demand t
@@ -273,14 +248,6 @@ Install =delight= and =diminish=
 (use-package delight)
 (use-package diminish)
 (diminish 'auto-revert-mode)
-#+END_SRC
-
-Install =req-package=
-
-#+BEGIN_SRC emacs-lisp
-(use-package req-package
-  :ensure t)
-(require 'req-package)
 #+END_SRC
 
 Install the startup profiler
@@ -357,7 +324,6 @@ Remove useless clutter
 (toggle-scroll-bar -1)
 (setq inhibit-startup-screen t)
 (setq ring-bell-function 'ignore)
-(fset 'yes-or-no-p 'y-or-n-p)
 (global-unset-key (kbd "C-x C-c"))
 #+END_SRC
 
@@ -493,7 +459,7 @@ sentence navigation commands work for me.
 Lazy people like me never want to type "yes" when "y" will suffice.
 
 #+BEGIN_SRC emacs-lisp
-(fset 'yes-or-no-p 'y-or-n-p)
+  (setq use-short-answers t)
 #+END_SRC
 
 *** Minibuffer editing - more space!
@@ -525,14 +491,15 @@ This lets you use =C-x u= (=undo-tree-visualize=) to visually walk through the c
   (use-package undo-tree
     :diminish
     :functions global-undo-tree-mode
-    :config
+    :commands (undo-tree-undo undo-tree-redo)
+    :init
     (global-undo-tree-mode)
     :custom
     (undo-tree-visualizer-timestamps t)
     (undo-tree-visualizer-diff t)
     (undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
     :bind (("C-z" . undo-tree-undo)
-  	 ("C-S-z" . undo-tree-redo)))
+  		 ("C-S-z" . undo-tree-redo)))
 #+END_SRC
 
 *** Help - which-key and discover-my-major
@@ -583,23 +550,6 @@ Use this to see the key bindings in a mode
     ;; don't find this very useful, but it's frequently useful to only
     ;; look at interactive functions.
     ("C-h C" . helpful-command)))
-#+END_SRC
-*** Killing text
-
-From https://github.com/itsjeyd/emacs-config/blob/emacs24/init.el
-Determine scope for next invocation of =kill-region= or
-=kill-ring-save=: When called interactively with no active
-region, operate on a single line. Otherwise, operate on region.
-
-#+BEGIN_SRC emacs-lisp
-  (defun seb/kill-region ()
-    "When called interactively with no active region, kill a single line instead."
-    (interactive
-      (if mark-active (list (region-beginning) (region-end))
-        (list (line-beginning-position)
-          (line-beginning-position 2)))))
-
-  (advice-add 'seb/kill-region :before #'seb/kill-region)
 #+END_SRC
 
 *** Under X, killing and yanking uses the X clipboard rather than just the primary selection
@@ -682,12 +632,14 @@ Add German (Bavarian) holidays
 ** Web Browser in Emacs
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path "~/.emacs.d/site-lisp/emacs-application-framework/")
-  (require 'eaf)
-  (use-package eaf-browser
-    :ensure nil
-    :bind
-    (:map eaf-mode-map
-  	("M-o" . nil)))
+  (use-package eaf
+    :load-path "~/.emacs.d/site-lisp/emacs-application-framework/"
+    :commands eaf-open-browser)
+  ;; (use-package eaf-browser
+  ;;   :ensure nil
+  ;;   :bind
+  ;;   (:map eaf-mode-map
+  ;; 	("M-o" . nil)))
 #+END_SRC
 
 ** Navigation
@@ -1200,7 +1152,6 @@ Use =sp-cheat-sheet= for an overview of commands.
   	("C-S-d" . 'sp-end-of-sexp)
 
   	("C-M-e" . 'sp-up-sexp)
-  	(")" . 'sp-up-sexp)
   	("C-M-u" . 'sp-backward-up-sexp)
   	("C-M-t" . 'sp-transpose-sexp)
 
@@ -1253,11 +1204,6 @@ Use =sp-cheat-sheet= for an overview of commands.
  Setup =company= and =flycheck= for code completion.
 
 #+BEGIN_SRC emacs-lisp
-  ;; (use-package company
-  ;;   :ensure t
-  ;;   :diminish
-  ;;   :init (add-hook 'after-init-hook 'global-company-mode))
-
   (use-package fringe-helper
     :ensure t)
 
@@ -1269,7 +1215,6 @@ Use =sp-cheat-sheet= for an overview of commands.
     (add-hook 'after-init-hook #'global-flycheck-mode)
     :config
     (progn
-      (global-flycheck-mode t)
       ;; because git-gutter is in the right fringe
       (setq flycheck-indication-mode 'left-fringe)
       ;; A non-descript, left-pointing arrow
@@ -1331,9 +1276,6 @@ Magit is magical for source control
 Show git statuses on the gutter
 
 #+BEGIN_SRC emacs-lisp
-(use-package fringe-helper
-    :ensure t)
-
 (use-package git-gutter-fringe+
     :ensure t
     :delight git-gutter+-mode
@@ -1700,8 +1642,6 @@ Experiment using =C-p= for project administration (TODO).
 Use treemacs constrained to the projectile project.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package treemacs)
-  (use-package projectile)
   (use-package treemacs-projectile
     ;; :require treemacs projectile
     :ensure t
@@ -1782,22 +1722,23 @@ Highlight FIXME, TODO, etc
 Try mucking about with layout and style (TODO).
 
 #+BEGIN_SRC emacs-lisp
-    ;; C/C++ style settings
-  (use-package cc-mode
-    :config
-    (c-toggle-electric-state -1)
-    (c-toggle-auto-newline -1)
-    (c-set-offset 'substatement-open '0) ; don't indent brackets
-    (c-set-offset 'inline-open       '+)
-    (c-set-offset 'block-open        '+)
-    (c-set-offset 'brace-list-open   '+)
-    (c-set-offset 'case-label        '+)
-    (c-set-offset 'access-label      '-)
-    (c-set-offset 'arglist-intro     '+)
-    (c-set-offset 'arglist-close     '0)
-    ;; Indent privacy keywords at same level as class properties
-    ;; (c-set-offset 'inclass #'+cc-c-lineup-inclass)
-    )
+
+  ;; C/C++ style settings
+  ;; (use-package cc-mode
+  ;;   :config
+  ;;   (c-toggle-electric-state -1)
+  ;;   (c-toggle-auto-newline -1)
+  ;;   (c-set-offset 'substatement-open '0) ; don't indent brackets
+  ;;   (c-set-offset 'inline-open       '+)
+  ;;   (c-set-offset 'block-open        '+)
+  ;;   (c-set-offset 'brace-list-open   '+)
+  ;;   (c-set-offset 'case-label        '+)
+  ;;   (c-set-offset 'access-label      '-)
+  ;;   (c-set-offset 'arglist-intro     '+)
+  ;;   (c-set-offset 'arglist-close     '0)
+  ;;   ;; Indent privacy keywords at same level as class properties
+  ;;   ;; (c-set-offset 'inclass #'+cc-c-lineup-inclass)
+  ;;   )
 
   (use-package modern-cpp-font-lock
     :ensure t
@@ -1838,13 +1779,12 @@ Mostly use =M-.= to jump to symbol.
 Use =ivy= to browse the tags.
 
 #+BEGIN_SRC emacs-lisp
-(use-package ivy)
-(use-package rtags)
-(use-package ivy-rtags
-    :ensure t
-    ;; :require ivy rtags
-    :config
-    (setq rtags-display-result-backend 'ivy))
+  (use-package ivy-rtags
+      :ensure t
+  	:after (ivy rtags)
+      ;; :require ivy rtags
+      :config
+      (setq rtags-display-result-backend 'ivy))
 #+END_SRC
 
 *** Irony
@@ -1893,24 +1833,21 @@ Switch between header and source files with =C-c o= and compile with =C-c b=.
 Use elpy with flycheck, ein, and jedi. These executables will probably have to be installed separately by the system package manager. Run =elpy-config= to set paths and other stuff.
 
 #+BEGIN_SRC emacs-lisp
-(use-package flycheck)
-(use-package py-autopep8)
-(use-package ein)
-(use-package jedi)
-(use-package elpy
-  :ensure t
-  ;; :require flycheck py-autopep8 ein jedi
-  :diminish elpy-mode
-  :diminish highlight-indentation-mode
-  :config
-  (elpy-enable)
-  (setq python-shell-interpreter "ipython"
-      python-shell-interpreter-args "-i --simple-prompt")
-  (setq elpy-syntax-check-command "pylint")
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-hook 'elpy-mode-hook 'flycheck-mode)
-  (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
-  (setq elpy-rpc-backend "jedi"))
+  (use-package elpy
+    :ensure t
+    :after (ein jedi flycheck py-autopep8)
+    ;; :require flycheck py-autopep8 ein jedi
+    :diminish elpy-mode
+    :diminish highlight-indentation-mode
+    :config
+    (elpy-enable)
+    (setq python-shell-interpreter "ipython"
+        python-shell-interpreter-args "-i --simple-prompt")
+    (setq elpy-syntax-check-command "pylint")
+    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+    (add-hook 'elpy-mode-hook 'flycheck-mode)
+    (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+    (setq elpy-rpc-backend "jedi"))
 #+END_SRC
 
 ** Lisp and Family
@@ -1969,20 +1906,6 @@ Use clojure with Cider.
   (use-package clojure-mode-extra-font-locking)
   (use-package paredit)
 
-  (use-package lsp-mode
-    :custom
-    (lsp-completion-provider :none) ;; we use Corfu!
-    :config
-    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
-    :init
-    (defun my/lsp-mode-setup-completion ()
-      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-            '(flex))) ;; Configure flex
-    :hook
-    (lsp-completion-mode . my/lsp-mode-setup-completion))
-
-  (use-package lsp-ui)
-  (use-package lsp-treemacs)
   (add-hook 'clojure-mode-hook 'lsp)
   (add-hook 'clojure-mode-hook
   	  (lambda ()
@@ -2105,36 +2028,29 @@ Syntax highlighting, REPL, and debugging are provided by Tuareg. We do have to m
 Other facilities like code completion are handled by Merlin.
 
 #+BEGIN_SRC emacs-lisp
-(use-package merlin
-  :ensure t
-  :diminish
-  :config
-  (progn
-	(setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
-	(add-to-list 'load-path (concat opam-share "/emacs/site-lisp"))
+  (use-package merlin
+    :ensure t
+    :diminish
+    :config
+    (progn
+  	(with-eval-after-load
+  		'tuareg
+  		(setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1)))
+  	(add-to-list 'load-path (concat opam-share "/emacs/site-lisp"))
 
-	;; Enable Merlin for ML buffers
-	(add-hook 'tuareg-mode-hook 'merlin-mode)
-	(setq merlin-use-auto-complete-mode t)
-	(setq merlin-error-after-save nil)
+  	;; Enable Merlin for ML buffers
+  	(add-hook 'tuareg-mode-hook 'merlin-mode)
+  	(setq merlin-use-auto-complete-mode t)
+  	(setq merlin-error-after-save nil)
 
-	(define-key merlin-mode-map
-	  (kbd "C-c <up>") 'merlin-type-enclosing-go-up)
-	(define-key merlin-mode-map
-	  (kbd "C-c <down>") 'merlin-type-enclosing-go-down)
-	(set-face-background 'merlin-type-face "#88FF44")))
+  	(define-key merlin-mode-map
+  	  (kbd "C-c <up>") 'merlin-type-enclosing-go-up)
+  	(define-key merlin-mode-map
+  	  (kbd "C-c <down>") 'merlin-type-enclosing-go-down)
+  	(set-face-background 'merlin-type-face "#88FF44")))
 
-;; -- enable auto-complete -------------------------------
-;; Not required, but useful along with merlin-mode
-(use-package auto-complete
-  :ensure t
-  :init
-  (add-hook 'tuareg-mode-hook 'auto-complete-mode))
-
-(use-package ocp-indent
-  :defer t)
-
-(setq opam-share (substring (shell-command-to-string "opam config var share") 0 -1))
+  (use-package ocp-indent
+    :defer t)
 #+END_SRC
 
 ** Latexes
@@ -2184,15 +2100,30 @@ Switch to using LSP. TODO: Try dante
 
 #+BEGIN_SRC emacs-lisp
   (use-package lsp-mode
-    :ensure t
-    :hook (haskell-mode . lsp)
-    :commands lsp
+    :custom
+    (lsp-completion-provider :none) ;; we use Corfu!
     :config
-     (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
-     (require 'lsp-haskell))
-  (require 'haskell-interactive-mode)
-  (require 'haskell-process)
-  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
+    :init
+    (defun my/lsp-mode-setup-completion ()
+      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+            '(flex))) ;; Configure flex
+    :hook
+    ((lsp-completion-mode . my/lsp-mode-setup-completion)
+     (haskell-mode . lsp)))
+
+  (use-package lsp-ui)
+  (use-package lsp-treemacs)
+
+  (use-package haskell-mode
+    :functions (interactive-haskell-mode)
+    :config
+    (add-hook 'haskell-mode-hook
+  		    (lambda ()
+  				(require 'lsp-haskell)
+  				(require 'haskell-interactive-mode)
+  				(require 'haskell-process)
+  				(interactive-haskell-mode))))
 #+END_SRC
 
 ** Rust
@@ -2217,40 +2148,4 @@ Rust support to Emacs.
       (setq-local compilation-ask-about-save nil)))
     (add-hook 'rustic-mode-hook 'rustic-mode-auto-save-hook)
     (setq rustic-analyzer-command '("~/.local/bin/rust-analyzer")))
-#+END_SRC
-
-
-
-* Bookend
-
-** Resolve dependency graph, download, and install.
-#+BEGIN_SRC emacs-lisp
-  ;; Make gc pauses faster by decreasing the threshold.
-  (setq gc-cons-threshold (* 80 1000 1000))
-
-  (require 'git-gutter-fringe+)
-  (require 'ivy)
-  (require 'company-racer)
-  (require 'flycheck-rust)
-  (require 'treemacs-projectile)
-  (require 'ivy-rtags)
-  (require 'irony)
-  (require 'elpy)
-  (require 'clojure-mode)
-  ;;(require 'company-ghc)
-  ;;(require 'spaceline)
-  (req-package-finish)
-
-  (toggle-scroll-bar -1)
-
-  ;; Remove pesky scroll bars
-  (when (fboundp 'tool-bar-mode)
-    (tool-bar-mode -1))
-  (when (fboundp 'scroll-bar-mode)
-    (scroll-bar-mode -1))
-  (when (fboundp 'horizontal-scroll-bar-mode)
-    (horizontal-scroll-bar-mode -1))
-
-  (add-hook 'after-make-frame-functions #'(lambda (_)
-  					    (scroll-bar-mode -1)))
 #+END_SRC

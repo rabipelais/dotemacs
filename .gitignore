@@ -1,3 +1,17 @@
 backup/*
 init.el
 /#*
+/straight/
+/workspace/
+/vimish-fold/
+/undo/
+/backups/
+/auto-save-list/
+/projects
+/quelpa/
+/projectile.cache
+/history
+/forge-database-*.sqlite
+/forge-database.sqlite
+/elpa/
+/init.elc

@@ -746,15 +746,15 @@ Requires =cmake=, =libvterm=, and a C compiler to compile the module on first in
 *** Windmove - switching between windows
 
 Windmove lets you move between windows with something more natural than cycling through =C-x o= (=other-window=).
-Windmove doesn't behave well with Org, so we need to use different keybindings. (The letters are basically WASD on the right hand, but on Colemak)
+Windmove doesn't behave well with Org, so we avoid default shift-arrow bindings and use an explicit prefix instead.
 
 #+BEGIN_SRC emacs-lisp
 (use-package windmove
   :bind
-  (("<f2> i" . windmove-right)
-   ("<f2> n" . windmove-left)
-   ("<f2> u" . windmove-up)
-   ("<f2> e" . windmove-down)))
+  (("C-c w <right>" . windmove-right)
+   ("C-c w <left>"  . windmove-left)
+   ("C-c w <up>"    . windmove-up)
+   ("C-c w <down>"  . windmove-down)))
 #+END_SRC
 
 *** Save list of recently accessed files
@@ -985,8 +985,8 @@ Useful template to insert elisp code blocks:
 (bind-key "C-c l" 'org-store-link)
 (bind-key "C-c L" 'org-insert-link-global)
 (bind-key "C-c O" 'org-open-at-point-global)
-(bind-key "<f9> <f9>" 'org-agenda-list)
-(bind-key "<f9> <f8>" (lambda () (interactive) (org-capture nil "r")))
+(bind-key "C-c a a" 'org-agenda-list)
+(bind-key "C-c a r" (lambda () (interactive) (org-capture nil "r")))
 #+END_SRC
 
 =append-next-kill= is more useful to me than =org-table-copy-region=.
@@ -1012,14 +1012,24 @@ Add templates:
   (autoload 'timelog-summarize-project           "timelog" nil :interactive)
   (autoload 'timelog-summarize-elapsed           "timelog" nil :interactive)
 
-  (define-key ctl-x-map "tld" 'timelog-summarize-day)
-  (define-key ctl-x-map "tlt" 'timelog-summarize-today)
-  (define-key ctl-x-map "tlm" 'timelog-summarize-month)
-  (define-key ctl-x-map "tlr" 'timelog-summarize-range)
-  (define-key ctl-x-map "tlD" 'timelog-summarize-each-day-in-range)
-  (define-key ctl-x-map "tlp" 'timelog-current-project)
-  (define-key ctl-x-map "tle" 'timelog-workday-elapsed)
-  (define-key ctl-x-map "tlf" 'timelog-open-file)
+  (global-set-key (kbd "C-c T d") 'timelog-summarize-day)
+  (global-set-key (kbd "C-c T t") 'timelog-summarize-today)
+  (global-set-key (kbd "C-c T m") 'timelog-summarize-month)
+  (global-set-key (kbd "C-c T r") 'timelog-summarize-range)
+  (global-set-key (kbd "C-c T D") 'timelog-summarize-each-day-in-range)
+  (global-set-key (kbd "C-c T p") 'timelog-current-project)
+  (global-set-key (kbd "C-c T e") 'timelog-workday-elapsed)
+  (global-set-key (kbd "C-c T f") 'timelog-open-file)
+
+  (cheatsheet-add-group 'Timelog
+                        '(:key "C-c T t" :description "Summarize today")
+                        '(:key "C-c T d" :description "Summarize day")
+                        '(:key "C-c T m" :description "Summarize month")
+                        '(:key "C-c T r" :description "Summarize range")
+                        '(:key "C-c T D" :description "Summarize each day in range")
+                        '(:key "C-c T p" :description "Current project")
+                        '(:key "C-c T e" :description "Workday elapsed")
+                        '(:key "C-c T f" :description "Open timelog file"))
 
   ;;(setq org-clock-persist 'history)
   ;;(org-clock-persistence-insinuate)
@@ -1161,6 +1171,31 @@ arrangement.
                       '(:key "C-M-`" :description "Promote/demote buffer to popup"))
 #+END_SRC
 
+*** which-key prefix annotations
+
+Name all =C-c= prefix groups so they appear as labelled menus in the which-key popup rather
+than showing a raw command name.
+
+#+BEGIN_SRC emacs-lisp
+  (with-eval-after-load 'which-key
+    (which-key-add-key-based-replacements
+      ;; Global C-c prefixes
+      "C-c a" "agenda/org"
+      "C-c c" "compile"
+      "C-c i" "inspect"        ;; clojure-mode: Portal
+      "C-c l" "links/org"
+      "C-c n" "notes"
+      "C-c p" "project"
+      "C-c s" "smartparens"
+      "C-c t" "treemacs"
+      "C-c T" "timelog"
+      "C-c v" "terminal"
+      "C-c w" "windows"
+      ;; Search / goto prefixes
+      "M-c"   "search"
+      "M-g"   "goto"))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (use-package outshine
     :ensure t
@@ -1258,11 +1293,11 @@ Use =sp-cheat-sheet= for an overview of commands.
   	("M-B" . 'sp-backward-symbol)
 
   	("C-c s t" . 'sp-prefix-tag-object)
-  	("C-c s p" . 'sp-prefix-pair-object)
+  	("C-c s P" . 'sp-prefix-pair-object)  ;; capital P — pair prefix modifier
   	("C-c s c" . 'sp-convolute-sexp)
   	("C-c s a" . 'sp-absorb-sexp)
   	("C-c s e" . 'sp-emit-sexp)
-  	("C-c s p" . 'sp-add-to-previous-sexp)
+  	("C-c s p" . 'sp-add-to-previous-sexp) ;; p=previous, pairs with n=next
   	("C-c s n" . 'sp-add-to-next-sexp)
   	("C-c s j" . 'sp-join-sexp)
   	("C-c s s" . 'sp-split-sexp)))
@@ -1708,7 +1743,7 @@ search-and-replace backed by ripgrep.
 
 *** Treemacs
 
-From https://github.com/Alexander-Miller/treemacs. This is a sidebar/navigator that integrates with =Projectile=. For advanced layout, you need both git and python3. Use =C-c tn= or =<f8>= to start/show/go to treemacs. With projectile, use =C-c tt=.
+From https://github.com/Alexander-Miller/treemacs. This is a sidebar/navigator that integrates with =Projectile=. For advanced layout, you need both git and python3. Use =C-c t t= to toggle or =C-c t n= to open treemacs. With projectile, use =C-c t p=.
 When in treemacs, use =n/p= to move, =M-n/M-p= to move to same-height neighbour =u= to go to parent, and =C-n/C-k= to move between projects.
 Experiment using =C-p= for project administration (TODO).
 
@@ -1736,13 +1771,13 @@ Experiment using =C-p= for project administration (TODO).
       (treemacs-git-mode 'extended))
     :bind
     (:map global-map
-	  ([f8]         . treemacs-toggle)
-	  ("M-0"        . treemacs-select-window)
-	  ("C-c 1"      . treemacs-delete-other-windows)
-	  ("C-c tn"     . treemacs)
-	  ("C-c tB"     . treemacs-bookmark)
-	  ("C-c t f"  . treemacs-find-file)
-	  ("C-c t M-t"  . treemacs-find-tag)))
+	  ("M-0"         . treemacs-select-window)
+	  ("C-c t t"     . treemacs-toggle)
+	  ("C-c t n"     . treemacs)
+	  ("C-c t B"     . treemacs-bookmark)
+	  ("C-c t f"     . treemacs-find-file)
+	  ("C-c t M-t"   . treemacs-find-tag)
+	  ("C-c t 1"     . treemacs-delete-other-windows)))
 #+END_SRC
 
 Use treemacs constrained to the projectile project.
@@ -1753,14 +1788,18 @@ Use treemacs constrained to the projectile project.
     :ensure t
     :after (treemacs projectile)
     :bind (:map global-map
-  		("C-c tt" . treemacs-projectile)))
+  		("C-c t p" . treemacs-projectile)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (cheatsheet-add-group 'Treemacs
-                      '(:key "C-c t t" :description "Treemacs projectile")
-                      '(:key "C-c t f" :description "Find file")
-                      '(:key "C-c t B" :description "Find bookmark"))
+                      '(:key "C-c t t" :description "Toggle treemacs sidebar")
+                      '(:key "C-c t n" :description "Open treemacs")
+                      '(:key "C-c t p" :description "Treemacs for current project")
+                      '(:key "C-c t f" :description "Find file in treemacs")
+                      '(:key "C-c t B" :description "Find bookmark")
+                      '(:key "C-c t 1" :description "Delete other windows")
+                      '(:key "M-0"     :description "Select treemacs window"))
 #+END_SRC
 
 ** LSP
@@ -1939,7 +1978,7 @@ projects that use CMake with =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON= for clangd/LSP
 *** Convenience
 
 Switch between header and source files with =C-c o= and compile with =C-c b=.
-=<f5>= re-runs the last compile command without prompting — essential for fast GPU iteration.
+=C-c c= re-runs the last compile command without prompting — essential for fast GPU iteration.
 =compilation-skip-threshold 2= makes error navigation jump only to errors, skipping verbose
 warning spam common in CUDA/template-heavy builds.
 
@@ -1949,13 +1988,13 @@ warning spam common in CUDA/template-heavy builds.
     (local-set-key  (kbd "C-c o") 'ff-find-other-file)
      (local-set-key  (kbd "C-c b") 'compile)))
 
-(global-set-key (kbd "<f5>") #'recompile)           ;; rerun last compile without prompt
+(global-set-key (kbd "C-c c") #'recompile)           ;; rerun last compile without prompt
 (setq compilation-scroll-output 'first-error)        ;; scroll to first error automatically
 (setq compilation-skip-threshold 2)                  ;; M-g M-n/M-p jumps to errors only
 
 (cheatsheet-add-group 'Compilation
-                      '(:key "C-c b" :description "Compile (C/C++ buffers)")
-                      '(:key "<f5>"  :description "Recompile (repeat last compile command)")
+                      '(:key "C-c b"   :description "Compile (C/C++ buffers)")
+                      '(:key "C-c c"   :description "Recompile (repeat last compile command)")
                       '(:key "M-g M-n" :description "Jump to next compilation error")
                       '(:key "M-g M-p" :description "Jump to previous compilation error"))
 #+END_SRC
@@ -2218,16 +2257,16 @@ data to Portal — no import needed since =tap>= is in =clojure.core=.
       (cider-interactive-eval "(tap> *1)"))
 
     (with-eval-after-load 'clojure-mode
-      (define-key clojure-mode-map (kbd "C-c P o") #'portal/open)
-      (define-key clojure-mode-map (kbd "C-c P c") #'portal/clear)
-      (define-key clojure-mode-map (kbd "C-c P x") #'portal/close)
-      (define-key clojure-mode-map (kbd "C-c P t") #'portal/tap-last)))
+      (define-key clojure-mode-map (kbd "C-c i o") #'portal/open)
+      (define-key clojure-mode-map (kbd "C-c i c") #'portal/clear)
+      (define-key clojure-mode-map (kbd "C-c i x") #'portal/close)
+      (define-key clojure-mode-map (kbd "C-c i t") #'portal/tap-last)))
 
 (cheatsheet-add-group 'Portal
-                      '(:key "C-c P o" :description "Open Portal inspector (registers tap> target)")
-                      '(:key "C-c P c" :description "Clear all Portal values")
-                      '(:key "C-c P x" :description "Close Portal and remove from tap>")
-                      '(:key "C-c P t" :description "tap> the last REPL result (*1)"))
+                      '(:key "C-c i o" :description "Open Portal inspector (clojure-mode)")
+                      '(:key "C-c i c" :description "Clear all Portal values")
+                      '(:key "C-c i x" :description "Close Portal and remove from tap>")
+                      '(:key "C-c i t" :description "tap> the last REPL result (*1)"))
 #+END_SRC
 
 ** OCaml

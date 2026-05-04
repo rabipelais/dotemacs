@@ -78,10 +78,10 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#vertico--co][Vertico & Co]]
     - [[#wgrep---edit-grep-results-as-a-buffer][Wgrep - edit grep results as a buffer]]
     - [[#treemacs][Treemacs]]
+  - [[#lsp][LSP]]
   - [[#c-and-family][C and Family]]
     - [[#style][Style]]
-    - [[#rtags][RTags]]
-    - [[#irony][Irony]]
+    - [[#clangd-lsp][clangd (LSP)]]
     - [[#cmake][CMake]]
     - [[#convenience][Convenience]]
   - [[#python][Python]]
@@ -1763,22 +1763,47 @@ Use treemacs constrained to the projectile project.
                       '(:key "C-c t B" :description "Find bookmark"))
 #+END_SRC
 
+** LSP
+
+Central configuration for =lsp-mode= and its UI companions. Individual language sections add their
+own =lsp= hooks; this section handles everything that is language-agnostic: completion integration
+with Corfu, the command keymap, and UI overlays.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package lsp-mode
+    :custom
+    (lsp-completion-provider :none)  ;; completion handled by Corfu via capf
+    :config
+    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
+    :init
+    (defun my/lsp-mode-setup-completion ()
+      ;; Use flex matching for LSP completions so orderless-style typing works
+      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+            '(flex)))
+    :hook
+    (lsp-completion-mode . my/lsp-mode-setup-completion))
+
+  ;; Sideline diagnostics, hover docs, and peek definitions
+  (use-package lsp-ui
+    :ensure t
+    :after lsp-mode
+    :custom
+    (lsp-ui-doc-enable t)
+    (lsp-ui-sideline-show-diagnostics t)
+    (lsp-ui-sideline-show-code-actions t))
+
+  ;; Integrate LSP symbol trees with Treemacs
+  (use-package lsp-treemacs
+    :ensure t
+    :after (lsp-mode treemacs))
+#+END_SRC
+
 ** C and Family
 
-It offers (based on [[https://github.com/hlissner/doom-emacs/tree/master/modules/lang/cc][=Doom=]] emacs)
-
-- Code completion (=company-irony=)
-- eldoc support (=irony-eldoc=)
-- Syntax-checking (=flycheck-irony=)
-- Code navigation (=rtags=)
-- File Templates (=c-mode, c++-mode=)
-- Snippets (=cc-mode, c-mode, c++-mode=)
-- Several improvements to C++11 indentation and syntax highlighting
-
-It requires having =rtags= and =irony-server= installed.
-
-Many tools will require you to have a =compilation database= (i.e. a =compile_commands.json= file).
-If you use CMake, run it with =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON .=, otherwise, use the cool BEAR tool, for example =bear make=.
+Provides font-locking, indentation, CUDA/GLSL/WGSL support, and LSP via =clangd=.
+Requires a =compile_commands.json= in the project root — generate with:
+- CMake: =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON=
+- Any other build system: =bear -- make=
 
 *** Style
 
@@ -1863,74 +1888,36 @@ Try mucking about with layout and style (TODO).
 
 #+END_SRC
 
-*** RTags
+*** clangd (LSP)
 
-Install from the package manager or from here https://github.com/Andersbakken/rtags
-You need a running =rdm= server, which should start automatically, or do it with
+=clangd= replaces both =rtags= (navigation, xref) and =irony= (completion, diagnostics) with a
+single actively-maintained language server. It uses the same =compile_commands.json= you were
+already generating for rtags:
 
 #+BEGIN_SRC bash :tangle no
-rdm &
-rc -J $PROJECT_ROOT  # loads PROJECT_ROOT's compile_commands.json
+# CMake projects:
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON .
+
+# Any other build system:
+bear -- make
 #+END_SRC
 
-Mostly use =M-.= to jump to symbol.
+Install clangd via your system package manager (e.g. =apt install clangd= or via the LLVM
+installer). =lsp-mode= is already declared under =** Haskell=; these hooks wire it into C/C++.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package rtags
-    :ensure t
-    :init
-    (add-hook 'c-mode-hook 'rtags-start-process-unless-running)
-    (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
-    :config
-    (setq rtags-autostart-diagnostics t
-          rtags-use-bookmarks nil
-          rtags-completions-enabled nil
-          ;; If not using ivy or helm to view results, use a pop-up window rather
-          ;; than displaying it in the current window...
-          rtags-results-buffer-other-window t
-          ;; ...and don't auto-jump to first match before making a selection.
-          rtags-jump-to-first-match nil))
-#+END_SRC
+  ;; Hook lsp into C/C++/ObjC
+  (add-hook 'c-mode-hook   #'lsp)
+  (add-hook 'c++-mode-hook #'lsp)
+  (add-hook 'objc-mode-hook #'lsp)
 
-Use =ivy= to browse the tags.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package ivy-rtags
-      :ensure t
-  	:after (ivy rtags)
-      ;; :require ivy rtags
-      :config
-      (setq rtags-display-result-backend 'ivy))
-#+END_SRC
-
-*** Irony
-
-=irony-mode= is an Emacs minor-mode that aims at improving the editing experience for the C, C++ and Objective-C languages.
-On the first run, =irony-mode= will ask you to build and install =irony-server=. To do so, type =M-x irony-install-server= RET.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package flycheck-irony)
-  (use-package company-irony)
-  (use-package irony-eldoc)
-  (use-package irony
-    :ensure t
-    ;; :require flycheck-irony company-irony irony-eldoc
-    :diminish
-    :commands irony-install-server
-    :init
-    (add-hook 'c++-mode-hook 'irony-mode)
-    (add-hook 'c-mode-hook 'irony-mode)
-    (add-hook 'objc-mode-hook 'irony-mode)
-
-    (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-
-    ;; Company completion
-    (eval-after-load 'company
-      '(add-to-list 'company-backends 'company-irony))
-
-    ;; Checker with flycheck
-    (eval-after-load 'flycheck
-      '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup)))
+  (with-eval-after-load 'lsp-clangd
+    (setq lsp-clients-clangd-args
+          '("--background-index"        ; index project in background, non-blocking
+            "--clang-tidy"              ; enable clang-tidy static analysis
+            "--completion-style=detailed"
+            "--header-insertion=never"  ; don't auto-insert #includes while typing
+            "--pch-storage=memory")))   ; store precompiled headers in RAM for speed
 #+END_SRC
 
 *** CMake
@@ -2060,6 +2047,7 @@ Use clojure with Cider.
     :ensure t)
   (use-package clojure-mode
     :ensure t
+    :after lsp-mode
     ;; :require clojure-mode-extra-font-locking cider paredit
   ;;  :mode ("\\.edn$" "\\.boot$" "\\.cljs.*$" ("lein.env" . enh-ruby-mode))
     :config
@@ -2332,34 +2320,22 @@ Change reftex-var to markdown-pandoc format, so they can be parsed and converted
 
 ** Haskell
 
-Switch to using LSP. TODO: Try dante
+Uses =lsp-mode= (declared in =** LSP=) with the =haskell-language-server= backend via =lsp-haskell=.
+Install =haskell-language-server= via GHCup: =ghcup install hls=.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package lsp-mode
-    :custom
-    (lsp-completion-provider :none) ;; we use Corfu!
-    :config
-    (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
-    :init
-    (defun my/lsp-mode-setup-completion ()
-      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-            '(flex))) ;; Configure flex
-    :hook
-    ((lsp-completion-mode . my/lsp-mode-setup-completion)
-     (haskell-mode . lsp)))
-
-  (use-package lsp-ui)
-  (use-package lsp-treemacs)
-
   (use-package haskell-mode
+    :ensure t
+    :after lsp-mode
     :functions (interactive-haskell-mode)
     :config
     (add-hook 'haskell-mode-hook
-  		    (lambda ()
-  				(require 'lsp-haskell)
-  				(require 'haskell-interactive-mode)
-  				(require 'haskell-process)
-  				(interactive-haskell-mode))))
+              (lambda ()
+                (require 'lsp-haskell)
+                (require 'haskell-interactive-mode)
+                (require 'haskell-process)
+                (interactive-haskell-mode)
+                (lsp))))
 #+END_SRC
 
 ** Rust

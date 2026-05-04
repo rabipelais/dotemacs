@@ -44,6 +44,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
   - [[#navigation][Navigation]]
     - [[#tabs-to-switch-buffers][Tabs to switch buffers]]
     - [[#pop-to-mark][Pop to mark]]
+    - [[#vterm---full-terminal-emulator][Vterm - full terminal emulator]]
     - [[#dirvish-alternative-to-dired][Dirvish, alternative to dired]]
     - [[#windmove---switching-between-windows][Windmove - switching between windows]]
     - [[#save-list-of-recently-accessed-files][Save list of recently accessed files]]
@@ -51,6 +52,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#ibuffer][IBuffer]]
     - [[#open-line-and-open-line-above-like-in-vim][Open line and open line above like in Vim]]
     - [[#use-ace-window-to-navigate-windows][Use ace-window to navigate windows]]
+    - [[#avy---jump-to-visible-text][Avy - jump to visible text]]
     - [[#frame-transpose-to-manipulate-layout][Frame transpose to manipulate layout]]
     - [[#highlight-symbol-like-vims-][Highlight symbol like Vim's "*"]]
     - [[#zap-up-to-char-instead-of-zap-to-char-bound-to-m-z][`zap-up-to-char` instead of `zap-to-char` bound to `M-z`]]
@@ -66,17 +68,21 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#deft][Deft]]
     - [[#calibre-mode][Calibre-mode]]
 - [[#programming][Programming]]
+    - [[#popper---tame-popup-windows][Popper - tame popup windows]]
     - [[#smartparens][Smartparens]]
     - [[#company-and-flycheck][Company and Flycheck]]
     - [[#git][Git]]
     - [[#projectile][Projectile]]
+    - [[#envrc---per-project-environment-variables][Envrc - per-project environment variables]]
     - [[#perspective][Perspective]]
     - [[#vertico--co][Vertico & Co]]
+    - [[#wgrep---edit-grep-results-as-a-buffer][Wgrep - edit grep results as a buffer]]
     - [[#treemacs][Treemacs]]
   - [[#c-and-family][C and Family]]
     - [[#style][Style]]
     - [[#rtags][RTags]]
     - [[#irony][Irony]]
+    - [[#cmake][CMake]]
     - [[#convenience][Convenience]]
   - [[#python][Python]]
   - [[#lisp-and-family][Lisp and Family]]
@@ -173,6 +179,9 @@ To be able to use some of the funtions in this configuration, you need some exte
 - Rust compiler
 - Racer
 - All-the-icons fonts
+- =direnv= (for =envrc= project-local env vars): install via system package manager
+- =libvterm= + =cmake= (for =vterm= terminal): install via system package manager
+- =glslangValidator= (optional, for GLSL LSP): from Vulkan SDK or =glslang= package
 
 Other mode and language specific dependencies are more obvious and described in their respective sections
 
@@ -661,6 +670,26 @@ Handy way of getting back to previous places.
 (setq set-mark-command-repeat-pop t)
 #+END_SRC
 
+*** Vterm - full terminal emulator
+
+=vterm= compiles a C module to emulate a real terminal (VTE), making it far faster and more
+compatible than =eshell= for GPU benchmark output, long compilation logs, and interactive shells.
+Requires =cmake=, =libvterm=, and a C compiler to compile the module on first install.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package vterm
+    :ensure t
+    :bind ("C-c v" . vterm)
+    :custom
+    (vterm-max-scrollback 10000))
+
+(cheatsheet-add-group 'Vterm
+                      '(:key "C-c v"   :description "Open vterm terminal")
+                      '(:key "C-c C-t" :description "Toggle vterm copy mode")
+                      '(:key "C-c C-n" :description "Next vterm prompt")
+                      '(:key "C-c C-p" :description "Previous vterm prompt"))
+#+END_SRC
+
 *** Dirvish, alternative to dired
 
 #+BEGIN_SRC emacs-lisp
@@ -823,6 +852,23 @@ Use IBuffer with =C-x C-b= to better organize current buffers
     :custom
     ;; For colemak
     (aw-keys '(?a ?r ?s ?t ?n ?e ?i ?o)))
+#+END_SRC
+
+*** Avy - jump to visible text
+=avy= lets you jump to any visible text with a few keystrokes. =C-'= followed by one or two characters highlights
+all matching positions with jump labels. Complements =ace-window=: ace-window picks the *window*, avy picks the *position*.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package avy
+    :ensure t
+    :bind (("C-'"     . avy-goto-char-timer)   ;; type chars, jump to match
+           ("M-g l"   . avy-goto-line)          ;; jump to any line
+           ("C-M-'"   . avy-goto-word-1)))       ;; jump to word beginning
+
+(cheatsheet-add-group 'Avy
+                      '(:key "C-'"   :description "Jump to char (timer - type prefix chars)")
+                      '(:key "M-g l" :description "Jump to any visible line")
+                      '(:key "C-M-'" :description "Jump to word beginning"))
 #+END_SRC
 
 *** Frame transpose to manipulate layout
@@ -1085,6 +1131,36 @@ Utility for note taking and file organization. Based on the whole *Build a Secon
 
 Some general stuff. Setup outline mode so we can use heading levels for code navigation and organization.
 
+*** Popper - tame popup windows
+
+=popper= designates buffers like compilation output, CIDER REPLs, and LSP diagnostics as transient
+"popups" so they don't disrupt your editing layout. Toggle them on/off without losing your window
+arrangement.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package popper
+    :ensure t
+    :bind (("C-`"   . popper-toggle)       ;; show/hide popup
+           ("M-`"   . popper-cycle)        ;; rotate through multiple popups
+           ("C-M-`" . popper-toggle-type)) ;; promote/demote a buffer to/from popup
+    :init
+    (setq popper-reference-buffers
+          '("\\*Messages\\*"
+            "\\*Warnings\\*"
+            "\\*cider-error\\*"
+            "\\*cider-repl.*\\*"
+            "\\*lsp-log\\*"
+            "\\*vterm\\*"
+            compilation-mode))
+    (popper-mode 1)
+    (popper-echo-mode 1))  ;; show which popup is active in the echo area
+
+(cheatsheet-add-group 'Popper
+                      '(:key "C-`"   :description "Toggle current popup buffer")
+                      '(:key "M-`"   :description "Cycle through popup buffers")
+                      '(:key "C-M-`" :description "Promote/demote buffer to popup"))
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (use-package outshine
     :ensure t
@@ -1346,6 +1422,18 @@ Use =Projectile= for project management. Start with =C-c p=
                         '(:key "C-c p P" :description "Test project"))
 #+END_SRC
 
+*** Envrc - per-project environment variables
+
+=envrc= reads =.envrc= files via [[https://direnv.net/][direnv]] and scopes environment variables to each project buffer,
+including variables seen by LSP servers and compile subprocesses. Replaces hardcoded env vars in
+=safe-local-variable-values=. Requires =direnv= installed on the system.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package envrc
+    :ensure t
+    :hook (after-init . envrc-global-mode))
+#+END_SRC
+
 *** Perspective
 
 Use =Perspective= for workspaces. A workspace is called a perspective. Commands are prefixed by =C-x x=:
@@ -1598,6 +1686,24 @@ The important ones are probably s, a, n, and p.
      ("C-;"   . embark-dwim)        ;; good alternative: M-.
      ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
     )
+#+END_SRC
+
+*** Wgrep - edit grep results as a buffer
+
+=wgrep= lets you edit the results of =consult-ripgrep=, =consult-grep=, or =occur= directly in the
+buffer and write the changes back to all affected files. Effectively gives you a multi-file
+search-and-replace backed by ripgrep.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package wgrep
+    :ensure t
+    :custom
+    (wgrep-auto-save-buffer t))   ;; save files immediately after applying edits
+
+(cheatsheet-add-group 'Wgrep
+                      '(:key "C-c C-p" :description "Enter wgrep edit mode in grep buffer")
+                      '(:key "C-c C-c" :description "Apply all wgrep edits and save")
+                      '(:key "C-c C-k" :description "Abort wgrep edits"))
 #+END_SRC
 
 *** Treemacs
@@ -2043,6 +2149,97 @@ Configure Cider
     ;; 	     (cider-namespace-refresh))))))
     (add-hook 'clojure-mode-hook #'paredit-mode)
     (define-key clojure-mode-map (kbd "C-c C-M-r") 'cider-namespace-refresh))
+#+END_SRC
+
+**** clj-refactor - structural Clojure refactoring
+
+=clj-refactor= provides semantic refactoring operations that work on the parsed sexp tree rather
+than text. All commands are prefixed with =C-c C-m=. The most useful daily operations are
+=am= (add missing require), =tf/tl= (thread first/last), and =uw= (unwind thread).
+
+#+BEGIN_SRC emacs-lisp
+  (use-package clj-refactor
+    :ensure t
+    :hook (clojure-mode . clj-refactor-mode)
+    :config
+    (cljr-add-keybindings-with-prefix "C-c C-m")
+    :custom
+    (cljr-warn-on-eval nil)  ;; don't prompt before analyzing project
+    (cljr-clojure-test-declaration "[clojure.test :refer [deftest is testing]]"))
+
+(cheatsheet-add-group 'clj-refactor
+                      '(:key "C-c C-m am" :description "Add missing require/import")
+                      '(:key "C-c C-m ap" :description "Add project dependency")
+                      '(:key "C-c C-m tf" :description "Thread first (->)")
+                      '(:key "C-c C-m tl" :description "Thread last (->>)")
+                      '(:key "C-c C-m uw" :description "Unwind thread")
+                      '(:key "C-c C-m el" :description "Introduce let binding")
+                      '(:key "C-c C-m il" :description "Inline let binding")
+                      '(:key "C-c C-m ef" :description "Extract function")
+                      '(:key "C-c C-m rn" :description "Rename symbol (project-wide)")
+                      '(:key "C-c C-m cn" :description "Clean namespace (sort requires)"))
+#+END_SRC
+
+**** Portal - interactive data visualization
+
+[[https://github.com/djblue/portal][Portal]] is a browser-based data inspector you =tap>= values into from the REPL. It renders
+Clojure data structures as interactive, navigable trees — essential for inspecting large maps,
+ring requests, or database results without cluttering the REPL buffer.
+
+First, add the dependency to your *user-level* =~/.clojure/deps.edn= so it's available in every
+project:
+
+#+BEGIN_SRC edn :tangle no
+;; ~/.clojure/deps.edn — under :aliases
+{:aliases
+ {:portal {:extra-deps {djblue/portal {:mvn/version "0.58.2"}}}}}
+#+END_SRC
+
+Start your REPL with the alias included, e.g. =clj -A:portal:repl/cider=, or add =:portal= to
+your existing =:repl/cider= alias. From any namespace in your code, =(tap> some-value)= sends
+data to Portal — no import needed since =tap>= is in =clojure.core=.
+
+#+BEGIN_SRC emacs-lisp
+  ;; Portal helpers — all work via requiring-resolve so no (require ...) is needed
+  ;; in the buffer namespace. Only active when a CIDER connection is live.
+  (with-eval-after-load 'cider
+
+    (defun portal/open ()
+      "Open a Portal inspector window and register it as a tap> target."
+      (interactive)
+      (cider-interactive-eval
+       "(do (add-tap (requiring-resolve 'portal.api/submit))
+            ((requiring-resolve 'portal.api/open)))"))
+
+    (defun portal/clear ()
+      "Clear all values currently shown in Portal."
+      (interactive)
+      (cider-interactive-eval
+       "((requiring-resolve 'portal.api/clear))"))
+
+    (defun portal/close ()
+      "Remove Portal from tap> targets and close the inspector window."
+      (interactive)
+      (cider-interactive-eval
+       "(do (remove-tap (requiring-resolve 'portal.api/submit))
+            ((requiring-resolve 'portal.api/close)))"))
+
+    (defun portal/tap-last ()
+      "Send the last REPL result (*1) to Portal via tap>."
+      (interactive)
+      (cider-interactive-eval "(tap> *1)"))
+
+    (with-eval-after-load 'clojure-mode
+      (define-key clojure-mode-map (kbd "C-c P o") #'portal/open)
+      (define-key clojure-mode-map (kbd "C-c P c") #'portal/clear)
+      (define-key clojure-mode-map (kbd "C-c P x") #'portal/close)
+      (define-key clojure-mode-map (kbd "C-c P t") #'portal/tap-last)))
+
+(cheatsheet-add-group 'Portal
+                      '(:key "C-c P o" :description "Open Portal inspector (registers tap> target)")
+                      '(:key "C-c P c" :description "Clear all Portal values")
+                      '(:key "C-c P x" :description "Close Portal and remove from tap>")
+                      '(:key "C-c P t" :description "tap> the last REPL result (*1)"))
 #+END_SRC
 
 ** OCaml

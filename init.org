@@ -1701,7 +1701,17 @@ Use c-likes for editing =glsl= files. Also add the correct file extensions to c+
     (add-to-list 'auto-mode-alist '("\\.vert\\'" . glsl-mode))
     (add-to-list 'auto-mode-alist '("\\.frag\\'" . glsl-mode))
     (add-to-list 'auto-mode-alist '("\\.tesc\\'" . glsl-mode))
-    (add-to-list 'auto-mode-alist '("\\.tese\\'" . glsl-mode)))
+    (add-to-list 'auto-mode-alist '("\\.tese\\'" . glsl-mode))
+    (add-to-list 'auto-mode-alist '("\\.comp\\'" . glsl-mode)))  ;; compute shaders
+
+  ;; CUDA - derives from c++-mode, adds __global__, __device__, threadIdx, etc.
+  (use-package cuda-mode
+    :ensure t
+    :mode "\\.cu\\'")
+
+  ;; WGSL - WebGPU Shading Language, increasingly common for cross-platform GPU work
+  (use-package wgsl-mode
+    :ensure t)
 
   (setq auto-mode-alist (cons '("\.cl$" . c-mode) auto-mode-alist))
 
@@ -1817,15 +1827,44 @@ On the first run, =irony-mode= will ask you to build and install =irony-server=.
       '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup)))
 #+END_SRC
 
+*** CMake
+
+=cmake-mode= provides syntax highlighting for =CMakeLists.txt=. =cmake-font-lock= adds richer
+semantic highlighting (targets, variables, generator expressions). Both are required for GPU
+projects that use CMake with =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON= for clangd/LSP.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package cmake-mode
+    :ensure t)
+
+  (use-package cmake-font-lock
+    :ensure t
+    :after cmake-mode
+    :hook (cmake-mode . cmake-font-lock-activate))
+#+END_SRC
+
 *** Convenience
 
 Switch between header and source files with =C-c o= and compile with =C-c b=.
+=<f5>= re-runs the last compile command without prompting — essential for fast GPU iteration.
+=compilation-skip-threshold 2= makes error navigation jump only to errors, skipping verbose
+warning spam common in CUDA/template-heavy builds.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'c-mode-common-hook
   (lambda()
     (local-set-key  (kbd "C-c o") 'ff-find-other-file)
      (local-set-key  (kbd "C-c b") 'compile)))
+
+(global-set-key (kbd "<f5>") #'recompile)           ;; rerun last compile without prompt
+(setq compilation-scroll-output 'first-error)        ;; scroll to first error automatically
+(setq compilation-skip-threshold 2)                  ;; M-g M-n/M-p jumps to errors only
+
+(cheatsheet-add-group 'Compilation
+                      '(:key "C-c b" :description "Compile (C/C++ buffers)")
+                      '(:key "<f5>"  :description "Recompile (repeat last compile command)")
+                      '(:key "M-g M-n" :description "Jump to next compilation error")
+                      '(:key "M-g M-p" :description "Jump to previous compilation error"))
 #+END_SRC
 
 ** Python

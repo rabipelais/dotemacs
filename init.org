@@ -69,6 +69,8 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#calibre-mode][Calibre-mode]]
 - [[#programming][Programming]]
     - [[#popper---tame-popup-windows][Popper - tame popup windows]]
+    - [[#which-key-prefix-annotations][which-key prefix annotations]]
+    - [[#apheleia---async-code-formatting][Apheleia - async code formatting]]
     - [[#smartparens][Smartparens]]
     - [[#company-and-flycheck][Company and Flycheck]]
     - [[#git][Git]]
@@ -406,8 +408,6 @@ Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less br
 *** Modeline configuration
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ein :ensure t)
-
   ;; This blocks at startup, we should just include the font-lock source
   ;; (use-package quelpa :ensure t)
   ;; (quelpa
@@ -899,20 +899,20 @@ all matching positions with jump labels. Complements =ace-window=: ace-window pi
 
 ** Org-mode
 *** General configuration
-Asterisks and dashes for bullet lists are fine, but having an actual circular bullet, is just nice:
+
+=org-modern= replaces heading markers, list bullets, checkboxes, tags, and timestamps with clean
+Unicode equivalents. It also hides emphasis markers (the old manual =org-hide-emphasis-markers=
+setting is now redundant and removed).
 
 #+BEGIN_SRC emacs-lisp
-  (font-lock-add-keywords 'org-mode
-			  '(("^ +\\([-*]\\) "
-			     (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-#+END_SRC
-
-This code uses a regular expression of lines with initial spaces, followed by either a dash or asterisks and a single space into a Unicode bullet.
-
-Sure /org italic/ characters look kinda like slanted words, but with the added baggage of having regular expression characters in your prose. Hide them with a simple setting:
-
-#+BEGIN_SRC emacs-lisp
-  (setq org-hide-emphasis-markers t)
+  (use-package org-modern
+    :ensure t
+    :hook (org-mode . org-modern-mode)
+    :custom
+    (org-modern-table nil)   ;; keep default table rendering for export compatibility
+    (org-modern-keyword t)
+    (org-modern-checkbox '((?X . "☑") (?- . "☐") (?\s . "☐")))
+    (org-modern-star '("◉" "○" "◈" "◇" "✸")))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1194,6 +1194,24 @@ than showing a raw command name.
       ;; Search / goto prefixes
       "M-c"   "search"
       "M-g"   "goto"))
+#+END_SRC
+
+*** Apheleia - async code formatting
+
+=apheleia= runs formatters (=clj-zprint=, =clang-format=, =ruff=, =rustfmt=, etc.) asynchronously
+in a subprocess and applies the result as a minimal diff, so point never moves and undo history
+is preserved. Replaces the =lsp-format-buffer= before-save hook in the Clojure section.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package apheleia
+    :ensure t
+    :hook (after-init . apheleia-global-mode)
+    :config
+    (setf (alist-get 'cljfmt apheleia-formatters)
+          '("cljfmt"
+            "fix"
+            file))
+    (add-to-list 'apheleia-mode-alist '(clojure-mode . cljfmt)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1835,6 +1853,16 @@ with Corfu, the command keymap, and UI overlays.
   (use-package lsp-treemacs
     :ensure t
     :after (lsp-mode treemacs))
+
+  ;; Automatically install and activate tree-sitter grammars for all supported modes.
+  ;; Emacs 29+ has tree-sitter built in; treesit-auto remaps classic modes to their
+  ;; *-ts-mode variants (e.g. python-mode -> python-ts-mode) transparently.
+  (use-package treesit-auto
+    :ensure t
+    :custom
+    (treesit-auto-install 'prompt)  ;; ask before downloading a grammar
+    :config
+    (global-treesit-auto-mode))
 #+END_SRC
 
 ** C and Family
@@ -2001,24 +2029,28 @@ warning spam common in CUDA/template-heavy builds.
 
 ** Python
 
-Use elpy with flycheck, ein, and jedi. These executables will probably have to be installed separately by the system package manager. Run =elpy-config= to set paths and other stuff.
+Modern Python setup using =lsp-mode= + =pyright= for type-aware completion and diagnostics.
+Formatting is handled by =apheleia= (via =ruff=) — no per-save hook needed here.
+Install pyright system-wide: =npm i -g pyright= or =pip install pyright=.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package elpy
+  (use-package lsp-pyright
     :ensure t
-    :after (ein jedi flycheck py-autopep8)
-    ;; :require flycheck py-autopep8 ein jedi
-    :diminish elpy-mode
-    :diminish highlight-indentation-mode
-    :config
-    (elpy-enable)
-    (setq python-shell-interpreter "ipython"
-        python-shell-interpreter-args "-i --simple-prompt")
-    (setq elpy-syntax-check-command "pylint")
-    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-    (add-hook 'elpy-mode-hook 'flycheck-mode)
-    (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
-    (setq elpy-rpc-backend "jedi"))
+    :after lsp-mode
+    :custom
+    (python-shell-interpreter "ipython")
+    (python-shell-interpreter-args "-i --simple-prompt")
+    :hook
+    ;; python-ts-mode is used when treesit-auto remaps python-mode on Emacs 29+
+    (python-mode    . lsp)
+    (python-ts-mode . lsp))
+
+  (cheatsheet-add-group 'Python
+                        '(:key "C-c C-S-l" :description "LSP command map")
+                        '(:key "C-c C-S-l r r" :description "Rename symbol")
+                        '(:key "C-c C-S-l g r" :description "Find references")
+                        '(:key "M-." :description "Jump to definition")
+                        '(:key "C-c C-p" :description "Python REPL"))
 #+END_SRC
 
 ** Lisp and Family
@@ -2078,9 +2110,6 @@ Use clojure with Cider.
   (use-package paredit)
 
   (add-hook 'clojure-mode-hook 'lsp)
-  (add-hook 'clojure-mode-hook
-  	  (lambda ()
-  	    (add-hook 'before-save-hook 'lsp-format-buffer nil 'make-it-local)))
 
   (use-package flycheck-clj-kondo
     :ensure t)

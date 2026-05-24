@@ -68,6 +68,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#deft][Deft]]
     - [[#calibre-mode][Calibre-mode]]
 - [[#programming][Programming]]
+    - [[#make-compile-shell-colorful][Make compile shell colorful]]
     - [[#popper---tame-popup-windows][Popper - tame popup windows]]
     - [[#which-key-prefix-annotations][which-key prefix annotations]]
     - [[#apheleia---async-code-formatting][Apheleia - async code formatting]]
@@ -450,7 +451,7 @@ Sort out fonts. Use Fira Code with ligatures. Now use ligatures.el, much less br
     (doom-modeline-project-detection 'auto)
     (doom-modeline-vcs-max-length 16))
 
-  (add-hook 'doom-modeline-mode-hook #'nyan-mode)
+  ;(add-hook 'doom-modeline-mode-hook #'nyan-mode)
   (which-function-mode)
 #+END_SRC
 
@@ -985,8 +986,8 @@ Useful template to insert elisp code blocks:
 (bind-key "C-c l" 'org-store-link)
 (bind-key "C-c L" 'org-insert-link-global)
 (bind-key "C-c O" 'org-open-at-point-global)
-(bind-key "C-c a a" 'org-agenda-list)
-(bind-key "C-c a r" (lambda () (interactive) (org-capture nil "r")))
+;(bind-key "C-c a a" 'org-agenda-list)
+;(bind-key "C-c a r" (lambda () (interactive) (org-capture nil "r")))
 #+END_SRC
 
 =append-next-kill= is more useful to me than =org-table-copy-region=.
@@ -1140,6 +1141,12 @@ Utility for note taking and file organization. Based on the whole *Build a Secon
 * Programming
 
 Some general stuff. Setup outline mode so we can use heading levels for code navigation and organization.
+
+*** Make compile shell colorful
+#+BEGIN_SRC emacs-lisp
+  (use-package ansi-color
+    :hook (compilation-filter . ansi-color-compilation-filter))
+#+END_SRC
 
 *** Popper - tame popup windows
 

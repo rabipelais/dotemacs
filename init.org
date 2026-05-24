@@ -1155,27 +1155,28 @@ Some general stuff. Setup outline mode so we can use heading levels for code nav
 arrangement.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package popper
-    :ensure t
-    :bind (("C-`"   . popper-toggle)       ;; show/hide popup
-           ("M-`"   . popper-cycle)        ;; rotate through multiple popups
-           ("C-M-`" . popper-toggle-type)) ;; promote/demote a buffer to/from popup
-    :init
-    (setq popper-reference-buffers
-          '("\\*Messages\\*"
-            "\\*Warnings\\*"
-            "\\*cider-error\\*"
-            "\\*cider-repl.*\\*"
-            "\\*lsp-log\\*"
-            "\\*vterm\\*"
-            compilation-mode))
-    (popper-mode 1)
-    (popper-echo-mode 1))  ;; show which popup is active in the echo area
+    (use-package popper
+      :ensure t
+      :functions (popper-mode popper-echo-mode)
+      :bind (("C-`"   . popper-toggle)       ;; show/hide popup
+             ("M-`"   . popper-cycle)        ;; rotate through multiple popups
+             ("C-M-`" . popper-toggle-type)) ;; promote/demote a buffer to/from popup
+      :init
+      (setq popper-reference-buffers
+            '("\\*Messages\\*"
+              "\\*Warnings\\*"
+              "\\*cider-error\\*"
+              "\\*cider-repl.*\\*"
+              "\\*lsp-log\\*"
+              "\\*vterm\\*"
+              compilation-mode))
+      (popper-mode 1)
+      (popper-echo-mode 1))  ;; show which popup is active in the echo area
 
-(cheatsheet-add-group 'Popper
-                      '(:key "C-`"   :description "Toggle current popup buffer")
-                      '(:key "M-`"   :description "Cycle through popup buffers")
-                      '(:key "C-M-`" :description "Promote/demote buffer to popup"))
+  (cheatsheet-add-group 'Popper
+                        '(:key "C-`"   :description "Toggle current popup buffer")
+                        '(:key "M-`"   :description "Cycle through popup buffers")
+                        '(:key "C-M-`" :description "Promote/demote buffer to popup"))
 #+END_SRC
 
 *** which-key prefix annotations
@@ -1452,6 +1453,7 @@ Use =Projectile= for project management. Start with =C-c p=
     (projectile-completion-system 'default)
     (projectile-enable-caching t)
     (projectile-mode-line '(:eval (format "[%s]" (projectile-project-name))))
+    (comint-terminfo-terminal 'ansi)
     :hook
     (after-init . projectile-mode))
 #+END_SRC
@@ -2263,46 +2265,46 @@ your existing =:repl/cider= alias. From any namespace in your code, =(tap> some-
 data to Portal — no import needed since =tap>= is in =clojure.core=.
 
 #+BEGIN_SRC emacs-lisp
-  ;; Portal helpers — all work via requiring-resolve so no (require ...) is needed
-  ;; in the buffer namespace. Only active when a CIDER connection is live.
-  (with-eval-after-load 'cider
+  ;;   ;; Portal helpers — all work via requiring-resolve so no (require ...) is needed
+  ;;   ;; in the buffer namespace. Only active when a CIDER connection is live.
+  ;;   (with-eval-after-load 'cider
 
-    (defun portal/open ()
-      "Open a Portal inspector window and register it as a tap> target."
-      (interactive)
-      (cider-interactive-eval
-       "(do (add-tap (requiring-resolve 'portal.api/submit))
-            ((requiring-resolve 'portal.api/open)))"))
+  ;;     (defun portal/open ()
+  ;;       "Open a Portal inspector window and register it as a tap> target."
+  ;;       (interactive)
+  ;;       (cider-interactive-eval
+  ;;        "(do (add-tap (requiring-resolve 'portal.api/submit))
+  ;;             ((requiring-resolve 'portal.api/open)))"))
 
-    (defun portal/clear ()
-      "Clear all values currently shown in Portal."
-      (interactive)
-      (cider-interactive-eval
-       "((requiring-resolve 'portal.api/clear))"))
+  ;;     (defun portal/clear ()
+  ;;       "Clear all values currently shown in Portal."
+  ;;       (interactive)
+  ;;       (cider-interactive-eval
+  ;;        "((requiring-resolve 'portal.api/clear))"))
 
-    (defun portal/close ()
-      "Remove Portal from tap> targets and close the inspector window."
-      (interactive)
-      (cider-interactive-eval
-       "(do (remove-tap (requiring-resolve 'portal.api/submit))
-            ((requiring-resolve 'portal.api/close)))"))
+  ;;     (defun portal/close ()
+  ;;       "Remove Portal from tap> targets and close the inspector window."
+  ;;       (interactive)
+  ;;       (cider-interactive-eval
+  ;;        "(do (remove-tap (requiring-resolve 'portal.api/submit))
+  ;;             ((requiring-resolve 'portal.api/close)))"))
 
-    (defun portal/tap-last ()
-      "Send the last REPL result (*1) to Portal via tap>."
-      (interactive)
-      (cider-interactive-eval "(tap> *1)"))
+  ;;     (defun portal/tap-last ()
+  ;;       "Send the last REPL result (*1) to Portal via tap>."
+  ;;       (interactive)
+  ;;       (cider-interactive-eval "(tap> *1)"))
 
-    (with-eval-after-load 'clojure-mode
-      (define-key clojure-mode-map (kbd "C-c i o") #'portal/open)
-      (define-key clojure-mode-map (kbd "C-c i c") #'portal/clear)
-      (define-key clojure-mode-map (kbd "C-c i x") #'portal/close)
-      (define-key clojure-mode-map (kbd "C-c i t") #'portal/tap-last)))
+  ;;     (with-eval-after-load 'clojure-mode
+  ;;       (define-key clojure-mode-map (kbd "C-c i o") #'portal/open)
+  ;;       (define-key clojure-mode-map (kbd "C-c i c") #'portal/clear)
+  ;;       (define-key clojure-mode-map (kbd "C-c i x") #'portal/close)
+  ;;       (define-key clojure-mode-map (kbd "C-c i t") #'portal/tap-last)))
 
-(cheatsheet-add-group 'Portal
-                      '(:key "C-c i o" :description "Open Portal inspector (clojure-mode)")
-                      '(:key "C-c i c" :description "Clear all Portal values")
-                      '(:key "C-c i x" :description "Close Portal and remove from tap>")
-                      '(:key "C-c i t" :description "tap> the last REPL result (*1)"))
+  ;; (cheatsheet-add-group 'Portal
+  ;;                       '(:key "C-c i o" :description "Open Portal inspector (clojure-mode)")
+  ;;                       '(:key "C-c i c" :description "Clear all Portal values")
+  ;;                       '(:key "C-c i x" :description "Close Portal and remove from tap>")
+  ;;                       '(:key "C-c i t" :description "tap> the last REPL result (*1)"))
 #+END_SRC
 
 ** OCaml
@@ -2395,7 +2397,7 @@ Change reftex-var to markdown-pandoc format, so they can be parsed and converted
 
 ** Haskell
 
-Uses =lsp-mode= (declared in =** LSP=) with the =haskell-language-server= backend via =lsp-haskell=.
+Uses =lsp-mode= (declared in =LSP=) with the =haskell-language-server= backend via =lsp-haskell=.
 Install =haskell-language-server= via GHCup: =ghcup install hls=.
 
 #+BEGIN_SRC emacs-lisp

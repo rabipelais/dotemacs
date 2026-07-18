@@ -86,6 +86,7 @@ To actually produce/extract the elisp code, run =M-x org-babel-tangle= (=C-c C-v
     - [[#style][Style]]
     - [[#clangd-lsp][clangd (LSP)]]
     - [[#cmake][CMake]]
+    - [[#compiler-explorer-rmsbolt][Compiler Explorer (rmsbolt)]]
     - [[#convenience][Convenience]]
   - [[#python][Python]]
   - [[#lisp-and-family][Lisp and Family]]
@@ -260,6 +261,17 @@ Install =delight= and =diminish=
 (use-package delight)
 (use-package diminish)
 (diminish 'auto-revert-mode)
+#+END_SRC
+
+Automatically reload buffers when their underlying file changes on disk (after a
+=git pull=, a branch switch, or an external formatter). =global-auto-revert-mode=
+handles file buffers; =global-auto-revert-non-file-buffers= extends it to Dired and
+other special buffers. The =diminish= above hides its modeline lighter.
+
+#+BEGIN_SRC emacs-lisp
+  (setq global-auto-revert-non-file-buffers t  ;; also revert Dired, Buffer Menu, etc.
+        auto-revert-verbose nil)               ;; don't echo on every revert
+  (global-auto-revert-mode 1)
 #+END_SRC
 
 Install the startup profiler
@@ -1199,6 +1211,12 @@ than showing a raw command name.
       "C-c T" "timelog"
       "C-c v" "terminal"
       "C-c w" "windows"
+      ;; C/C++ & LSP
+      "C-c O"       "other file (clangd)"
+      "C-c C-S-l"   "lsp"
+      "C-c C-S-l s" "consult symbols"
+      "C-c C-S-l d" "consult diagnostics"
+      "C-c C-S-l f" "consult file symbols"
       ;; Search / goto prefixes
       "M-c"   "search"
       "M-g"   "goto"))
@@ -1458,6 +1476,22 @@ Use =Projectile= for project management. Start with =C-c p=
     (after-init . projectile-mode))
 #+END_SRC
 
+=projection= adds project-type-aware build/configure/test/run commands: it detects
+CMake (and other build systems) through Emacs' built-in =project.el= and generates the
+right shell commands, while =projection-multi= lets you pick among targets. It coexists
+with Projectile (which handles navigation here) — projection focuses on the
+build/test/run lifecycle. Commands live under =projection-map=.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package projection
+    :ensure t
+    :hook (after-init . global-projection-hook-mode))
+
+  (use-package projection-multi
+    :ensure t
+    :after projection)
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (cheatsheet-add-group 'Projectile
                         '(:key "C-c p p" :description "Switch project")
@@ -1634,6 +1668,24 @@ The important ones are probably s, a, n, and p.
     ;; (add-hook 'completion-at-point-functions #'cape-history)
     ;; ...
   )
+
+  ;; yasnippet renders the interactive template fields that lsp-mode uses for
+  ;; server "snippet" completions (e.g. clangd returning std::void_t<${1:typename}>).
+  ;; It is installed as a transitive dependency of clj-refactor/elpy, so its
+  ;; autoloads make `yas-minor-mode' fboundp; that alone makes lsp-mode advertise
+  ;; snippetSupport to servers. Without the mode actually ON, the raw ${1:...}
+  ;; placeholder is inserted literally. Enabling it turns those into editable,
+  ;; Tab-navigable fields. Use `:hook (lsp-mode . yas-minor-mode)' to scope it.
+  (use-package yasnippet
+    :ensure t
+    :config
+    (yas-global-mode 1))
+
+  ;; Ready-made snippet collection (C/C++, etc.) so yasnippet earns its keep
+  ;; beyond rendering LSP server snippets.
+  (use-package yasnippet-snippets
+    :ensure t
+    :after yasnippet)
 
   ;; Example configuration for Consult
   (unbind-key "M-c")
@@ -1839,6 +1891,12 @@ with Corfu, the command keymap, and UI overlays.
   (use-package lsp-mode
     :custom
     (lsp-completion-provider :none)  ;; completion handled by Corfu via capf
+    (lsp-inlay-hint-enable t)             ;; clangd parameter-name & deduced-type hints
+    (lsp-headerline-breadcrumb-enable t)  ;; show namespace > class > method path
+    ;; clangd registers "\n" as an on-type-formatting trigger, so every RET sent a
+    ;; reindent edit that left point stranded at column 0 (before the whitespace).
+    ;; We format on save via apheleia/clang-format, so this is redundant — disable it.
+    (lsp-enable-on-type-formatting nil)
     :config
     (define-key lsp-mode-map (kbd "C-c C-S-l") lsp-command-map)
     :init
@@ -1847,7 +1905,10 @@ with Corfu, the command keymap, and UI overlays.
       (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
             '(flex)))
     :hook
-    (lsp-completion-mode . my/lsp-mode-setup-completion))
+    (lsp-completion-mode . my/lsp-mode-setup-completion)
+    ;; Auto-label the entire `lsp-command-map' (goto/refactor/toggle/peek/...) in
+    ;; the which-key popup, so we don't hand-list each LSP key.
+    (lsp-mode . lsp-enable-which-key-integration))
 
   ;; Sideline diagnostics, hover docs, and peek definitions
   (use-package lsp-ui
@@ -1863,15 +1924,52 @@ with Corfu, the command keymap, and UI overlays.
     :ensure t
     :after (lsp-mode treemacs))
 
+  ;; Bridge consult with LSP: fuzzy workspace/file symbol search and diagnostics.
+  ;; Bind into `lsp-command-map' itself (reached via the C-c C-S-l prefix) rather
+  ;; than the literal chord, so these stay correct if `lsp-keymap-prefix' changes.
+  ;; s/d/f are unused at the top level of lsp-command-map.
+  (use-package consult-lsp
+    :ensure t
+    :after (consult lsp-mode)
+    :bind (:map lsp-command-map
+                ("s" . consult-lsp-symbols)
+                ("d" . consult-lsp-diagnostics)
+                ("f" . consult-lsp-file-symbols)))
+
+  ;; dap-mode: Debug Adapter Protocol client (breakpoints, watch, call stack, REPL).
+  ;; codelldb is LLVM's debug adapter — best for inspecting std:: containers,
+  ;; optionals, and smart pointers in C/C++. `dap-codelldb-setup' downloads the
+  ;; adapter on first use and is a no-op once installed.
+  (use-package dap-mode
+    :ensure t
+    :functions (dap-codelldb-setup dap-auto-configure-mode)
+    :after lsp-mode
+    :config
+    (require 'dap-codelldb)
+    (dap-codelldb-setup)
+    (dap-auto-configure-mode))
+
   ;; Automatically install and activate tree-sitter grammars for all supported modes.
   ;; Emacs 29+ has tree-sitter built in; treesit-auto remaps classic modes to their
   ;; *-ts-mode variants (e.g. python-mode -> python-ts-mode) transparently.
-  (use-package treesit-auto
-    :ensure t
-    :custom
-    (treesit-auto-install 'prompt)  ;; ask before downloading a grammar
-    :config
-    (global-treesit-auto-mode))
+  ;; (use-package treesit-auto
+  ;;   :ensure t
+  ;;   :custom
+  ;;   (treesit-auto-install 'prompt)  ;; ask before downloading a grammar
+  ;;   :config
+  ;;   (global-treesit-auto-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (cheatsheet-add-group 'LSP
+                        '(:key "C-c C-S-l"   :description "LSP command map")
+                        '(:key "C-c C-S-l s" :description "consult: workspace symbols")
+                        '(:key "C-c C-S-l d" :description "consult: diagnostics")
+                        '(:key "C-c C-S-l f" :description "consult: file symbols")
+                        '(:key "C-c C-S-l a a" :description "Code actions")
+                        '(:key "C-c C-S-l r r" :description "Rename symbol")
+                        '(:key "C-c C-S-l g r" :description "Find references")
+                        '(:key "C-c C-S-l G g" :description "Peek definitions"))
 #+END_SRC
 
 ** C and Family
@@ -1886,18 +1984,26 @@ Requires a =compile_commands.json= in the project root — generate with:
 Set indentation style to the One True Style (Kernighan & Ritchie). Also, indentation with tabs. This is the objectively better option and everyone else is wrong (but spaces for alignment).
 
 #+BEGIN_SRC emacs-lisp
-(setq c-auto-newline 1) ;; auto newline after curly, semicolon, etc
+;; NOTE: a top-level `(setq c-auto-newline 1)' used to live here but never took
+;; effect: `c-auto-newline' is buffer-local and managed by CC-Mode's electric
+;; machinery, so the global default was shadowed when c++-mode initialised.
 (setq-default c-default-style "k&r"
 			  tab-width 4
 			  c-basic-offset 4)
 #+END_SRC
 
-Show the name of the function where you're located.
+Show the name of the function where you're located, and hand brace insertion to
+smartparens. With CC-Mode's electric state on, =c-electric-brace= (bound to ={=)
+suppresses smartparens' matching =}=. Disabling electric state makes ={= self-insert
+so smartparens pairs to ={}=; pressing =RET= inside then runs
+=my/create-newline-and-enter-sexp= to expand into a multi-line block. Formatting on
+save is handled by =apheleia=/=clang-format=, so we don't need CC's electric reflow.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'c-mode-common-hook
   (lambda ()
-    (which-function-mode t)))
+    (which-function-mode t)
+    (c-toggle-electric-state -1)))
 #+END_SRC
 
 Use c-likes for editing =glsl= files. Also add the correct file extensions to c++ mode.
@@ -2012,17 +2118,32 @@ projects that use CMake with =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON= for clangd/LSP
     :hook (cmake-mode . cmake-font-lock-activate))
 #+END_SRC
 
+*** Compiler Explorer (rmsbolt)
+
+=rmsbolt= is a local Compiler Explorer (godbolt): =M-x rmsbolt-mode= in a C/C++/CUDA
+buffer shows the generated assembly for the code under point in a side window, updating
+as you edit. Invaluable for checking codegen on hot paths and GPU-adjacent work without a
+browser round-trip.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package rmsbolt
+    :ensure t
+    :commands (rmsbolt-mode rmsbolt-compile))
+#+END_SRC
+
 *** Convenience
 
-Switch between header and source files with =C-c o= and compile with =C-c b=.
-=C-c c= re-runs the last compile command without prompting — essential for fast GPU iteration.
-=compilation-skip-threshold 2= makes error navigation jump only to errors, skipping verbose
-warning spam common in CUDA/template-heavy builds.
+Switch between header and source files with =C-c o= (filename-based) or =C-c O=
+(clangd's index/AST-based switch, more reliable across mismatched names), and compile
+with =C-c b=. =C-c c= re-runs the last compile command without prompting — essential
+for fast GPU iteration. =compilation-skip-threshold 2= makes error navigation jump only
+to errors, skipping verbose warning spam common in CUDA/template-heavy builds.
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'c-mode-common-hook
   (lambda()
     (local-set-key  (kbd "C-c o") 'ff-find-other-file)
+    (local-set-key  (kbd "C-c O") 'lsp-clangd-find-other-file)
      (local-set-key  (kbd "C-c b") 'compile)))
 
 (global-set-key (kbd "C-c c") #'recompile)           ;; rerun last compile without prompt
@@ -2030,6 +2151,8 @@ warning spam common in CUDA/template-heavy builds.
 (setq compilation-skip-threshold 2)                  ;; M-g M-n/M-p jumps to errors only
 
 (cheatsheet-add-group 'Compilation
+                      '(:key "C-c o"   :description "Switch header/source (filename)")
+                      '(:key "C-c O"   :description "Switch header/source (clangd)")
                       '(:key "C-c b"   :description "Compile (C/C++ buffers)")
                       '(:key "C-c c"   :description "Recompile (repeat last compile command)")
                       '(:key "M-g M-n" :description "Jump to next compilation error")

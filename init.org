@@ -2118,6 +2118,100 @@ projects that use CMake with =-DCMAKE_EXPORT_COMPILE_COMMANDS=ON= for clangd/LSP
     :hook (cmake-mode . cmake-font-lock-activate))
 #+END_SRC
 
+*** CUDA project scaffold
+
+=M-x my/cuda-new-project= writes an empty CUDA+CMake project (=CMakeLists.txt=, =src/main.cu=,
+=.clangd=), configures cmake, symlinks the compile DB to the root, and opens =main.cu=.
+
+#+BEGIN_SRC emacs-lisp
+  (defun my/cuda-detect-arch ()
+    "clangd --cuda-gpu-arch value from live GPU, else sm_86."
+    (let ((cc (string-trim
+               (shell-command-to-string
+                "nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | head -1"))))
+      (if (string-match "\\([0-9]+\\)\\.\\([0-9]+\\)" cc)
+          (format "sm_%s%s" (match-string 1 cc) (match-string 2 cc))
+        "sm_86")))
+
+  (defun my/cuda-detect-path ()
+    "CUDA toolkit root from nvcc, else /usr/local/cuda."
+    (let ((nvcc (executable-find "nvcc")))
+      (if nvcc
+          (directory-file-name
+           (file-name-directory
+            (directory-file-name
+             (file-name-directory (file-truename nvcc)))))
+        "/usr/local/cuda")))
+
+  (defvar my/cuda-cmake-template "cmake_minimum_required(VERSION 3.24)
+  project(%s LANGUAGES CXX CUDA)
+
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  set(CMAKE_CUDA_STANDARD 17)
+  set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+  add_executable(app src/main.cu)
+  set_target_properties(app PROPERTIES CUDA_ARCHITECTURES native)
+  ")
+
+  (defvar my/cuda-main-template "#include <cstdio>
+
+  __global__ void hello() {
+      printf(\"block %d thread %d\\n\", blockIdx.x, threadIdx.x);
+  }
+
+  int main() {
+      hello<<<2, 4>>>();
+      cudaError_t err = cudaDeviceSynchronize();
+      if (err != cudaSuccess) {
+          fprintf(stderr, \"cuda error: %s\\n\", cudaGetErrorString(err));
+          return 1;
+      }
+      return 0;
+  }
+  ")
+
+  (defvar my/cuda-clangd-template "CompileFlags:
+    Add:
+      - -xcuda
+      - --cuda-path=%s
+      - --cuda-gpu-arch=%s
+    Remove:
+      - -forward-unknown-to-host-compiler
+      - --generate-code*
+      - --options-file
+      - -gencode*
+      - -rdc=*
+      - -Xcompiler*
+      - -Xcudafe*
+      - --expt-*
+      - -arch=*
+      - --default-stream*
+  ")
+
+  (defun my/cuda-new-project (dir)
+    "Scaffold CUDA+CMake project in DIR with clangd tooling."
+    (interactive "GNew CUDA project dir: ")
+    (let* ((dir  (file-name-as-directory (expand-file-name dir)))
+           (name (file-name-nondirectory (directory-file-name dir)))
+           (arch (my/cuda-detect-arch))
+           (cuda (my/cuda-detect-path)))
+      (make-directory (concat dir "src") t)
+      (with-temp-file (concat dir "CMakeLists.txt")
+        (insert (format my/cuda-cmake-template name)))
+      (with-temp-file (concat dir "src/main.cu")
+        (insert my/cuda-main-template))
+      (with-temp-file (concat dir ".clangd")
+        (insert (format my/cuda-clangd-template cuda arch)))
+      (let ((default-directory dir))
+        (call-process "cmake" nil "*cuda-cmake*" nil "-S" "." "-B" "build")
+        (when (file-exists-p (concat dir "build/compile_commands.json"))
+          (make-symbolic-link "build/compile_commands.json"
+                              (concat dir "compile_commands.json") t)))
+      (find-file (concat dir "src/main.cu"))
+      (message "CUDA project %s ready (arch %s, cuda %s)" name arch cuda)))
+#+END_SRC
+
 *** Compiler Explorer (rmsbolt)
 
 =rmsbolt= is a local Compiler Explorer (godbolt): =M-x rmsbolt-mode= in a C/C++/CUDA
